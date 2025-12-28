@@ -4,6 +4,7 @@ import { authOptions } from "../../../../auth/[...nextauth]/route";
 import connectDB from "@/lib/mongodb";
 import Quote from "@/models/Quote";
 import Submission from "@/models/Submission";
+import { logActivity, createActivityLogData } from "@/utils/activityLogger";
 
 /**
  * POST /api/agency/quotes/[id]/approve
@@ -79,6 +80,28 @@ export async function POST(
     quote.approvedAt = new Date();
     quote.approvedByUserId = (session.user as any).id;
     await quote.save();
+
+    // Log activity: Quote approved
+    await logActivity(
+      createActivityLogData(
+        "QUOTE_APPROVED",
+        `Quote approved by agency`,
+        {
+          submissionId: submission._id.toString(),
+          quoteId: quote._id.toString(),
+          user: {
+            id: (session.user as any).id,
+            name: (session.user as any).name || (session.user as any).email,
+            email: (session.user as any).email,
+            role: (session.user as any).role || "agency",
+          },
+          details: {
+            clientName: submission.clientContact?.name,
+            finalAmount: quote.finalAmountUSD,
+          },
+        }
+      )
+    );
 
     console.log(`✅ Quote ${quoteId} approved by agency user ${(session.user as any).id}`);
     console.log(`📧 Mock notification: Agency approved quote for ${submission.clientContact?.name}`);

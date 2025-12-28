@@ -39,6 +39,7 @@ export interface IQuote extends Document {
   expirationDate?: Date;
   policyNumber?: string;
   specialNotes?: string;
+  adminNotes?: string; // Internal notes visible to agencies
   
   // Documents
   binderPdfUrl?: string;
@@ -139,6 +140,10 @@ const QuoteSchema: Schema = new Schema(
     },
     specialNotes: {
       type: String,
+    },
+    adminNotes: {
+      type: String,
+      trim: true,
     },
     // Documents
     binderPdfUrl: {

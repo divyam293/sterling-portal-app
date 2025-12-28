@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { signOut } from "next-auth/react";
 import FinanceOption from "@/components/FinanceOption";
 
 interface Quote {
@@ -36,6 +37,10 @@ export default function AgencyQuotesPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [filterStatus, setFilterStatus] = useState<string>("ALL");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filterCarrier, setFilterCarrier] = useState<string>("ALL");
+  const [showFilters, setShowFilters] = useState(false);
+  const [allQuotes, setAllQuotes] = useState<Quote[]>([]);
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -48,6 +53,35 @@ export default function AgencyQuotesPage() {
       fetchQuotes();
     }
   }, [status, filterStatus]);
+
+  // Apply client-side filters (search, carrier)
+  const applyFilters = (quotesToFilter: Quote[]) => {
+    let filtered = [...quotesToFilter];
+
+    // Apply search filter
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(
+        (quote) =>
+          quote.clientName?.toLowerCase().includes(query) ||
+          quote.carrierName?.toLowerCase().includes(query) ||
+          quote.submissionId?.toLowerCase().includes(query)
+      );
+    }
+
+    // Apply carrier filter
+    if (filterCarrier !== "ALL") {
+      filtered = filtered.filter((quote) => quote.carrierName === filterCarrier);
+    }
+
+    setQuotes(filtered);
+  };
+
+  useEffect(() => {
+    if (allQuotes.length > 0) {
+      applyFilters(allQuotes);
+    }
+  }, [searchQuery, filterCarrier]);
 
   // Get filter from URL params
   useEffect(() => {
@@ -89,9 +123,12 @@ export default function AgencyQuotesPage() {
       console.log("✅ Quotes fetched:", data.count || 0);
       
       if (data.quotes) {
-        setQuotes(data.quotes);
+        setAllQuotes(data.quotes);
+        // Apply client-side filtering for search and carrier
+        applyFilters(data.quotes);
       } else {
         console.warn("⚠️  No quotes in response");
+        setAllQuotes([]);
         setQuotes([]);
       }
     } catch (err: any) {
@@ -198,25 +235,29 @@ export default function AgencyQuotesPage() {
   const getStatusBadgeColor = (status: string) => {
     switch (status) {
       case "ENTERED":
-        return "bg-blue-100 text-blue-800";
+        return "bg-blue-100 text-blue-800 border border-blue-200";
       case "POSTED":
-        return "bg-purple-100 text-purple-800";
+        return "bg-purple-100 text-purple-800 border border-purple-200";
       case "APPROVED":
-        return "bg-green-100 text-green-800";
+        return "bg-green-100 text-green-800 border border-green-200";
       case "BIND_REQUESTED":
-        return "bg-orange-100 text-orange-800";
+        return "bg-orange-100 text-orange-800 border border-orange-200";
       case "BOUND":
-        return "bg-green-100 text-green-800";
+        return "bg-emerald-100 text-emerald-800 border border-emerald-200";
       default:
-        return "bg-gray-100 text-gray-800";
+        return "bg-gray-100 text-gray-800 border border-gray-200";
     }
   };
 
   if (status === "loading" || loading) {
     return (
-      <div className="min-h-screen bg-[#F5F5F5] flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
-          <div className="animate-pulse text-[#6B6B6B]">Loading...</div>
+          <div className="relative w-16 h-16 mx-auto mb-4">
+            <div className="absolute inset-0 border-4 border-cyan-100 rounded-full"></div>
+            <div className="absolute inset-0 border-4 border-transparent border-t-cyan-500 rounded-full animate-spin"></div>
+          </div>
+          <p className="text-sm text-gray-600 font-medium">Loading quotes...</p>
         </div>
       </div>
     );
@@ -227,52 +268,73 @@ export default function AgencyQuotesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F5F5F5]">
-      {/* Header */}
-      <header className="bg-white border-b border-[#E0E0E0]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between">
-            <Link href="/agency/dashboard" className="text-xl font-bold text-[#4A4A4A]">
-              Sterling Portal
-            </Link>
-            <div className="flex items-center gap-4">
-              <span className="text-sm text-[#6B6B6B]">
-                {session?.user?.name || session?.user?.email}
-              </span>
-              <Link
-                href="/api/auth/signout"
-                className="text-sm text-[#6B6B6B] hover:text-[#4A4A4A]"
-              >
-                Sign Out
-              </Link>
+    <div className="min-h-screen bg-gray-50 flex">
+      {/* Sidebar - Matching Dashboard */}
+      <aside className="w-[70px] bg-[#3A3C3F] flex flex-col items-center pt-6 pb-8 fixed h-full z-50 border-r border-gray-700">
+        <Link href="/agency/dashboard" className="mb-8 group flex flex-col items-center">
+          <div className="relative mb-3">
+            <div className="absolute inset-0 bg-gradient-to-br from-[#00BCD4] to-[#0097A7] rounded-xl blur-md opacity-40 group-hover:opacity-60 transition-all"></div>
+            <div className="relative w-14 h-14 bg-gradient-to-br from-[#1A1F2E] via-[#2A3240] to-[#1A1F2E] rounded-xl flex items-center justify-center shadow-2xl border border-[#00BCD4]/20 group-hover:border-[#00BCD4]/40 transition-all overflow-hidden">
+              <div className="absolute inset-0 opacity-10">
+                <div className="absolute inset-0 bg-gradient-to-br from-[#00BCD4] to-transparent"></div>
+              </div>
+              <svg className="relative w-9 h-9" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M50 10 L80 25 L80 55 Q80 75 50 90 Q20 75 20 55 L20 25 Z" fill="url(#logoGradient1)" className="drop-shadow-lg" />
+                <path d="M50 25 L65 40 L50 70 L35 40 Z" fill="url(#logoGradient2)" className="drop-shadow-md" />
+                <path d="M50 30 L50 65" stroke="#FFFFFF" strokeWidth="3" strokeLinecap="round" className="drop-shadow-sm" />
+                <path d="M40 47 L60 47" stroke="#FFFFFF" strokeWidth="2.5" strokeLinecap="round" opacity="0.8" />
+                <defs>
+                  <linearGradient id="logoGradient1" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#00BCD4" stopOpacity="0.9" />
+                    <stop offset="100%" stopColor="#0097A7" stopOpacity="0.95" />
+                  </linearGradient>
+                  <linearGradient id="logoGradient2" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.25" />
+                    <stop offset="100%" stopColor="#FFFFFF" stopOpacity="0.1" />
+                  </linearGradient>
+                </defs>
+              </svg>
+              <div className="absolute top-1 right-1 w-1.5 h-1.5 bg-[#00BCD4] rounded-full opacity-60"></div>
+              <div className="absolute bottom-1 left-1 w-1.5 h-1.5 bg-[#00BCD4] rounded-full opacity-60"></div>
             </div>
           </div>
-        </div>
-      </header>
+          <div className="text-center px-2">
+            <p className="text-[9px] font-semibold text-gray-400 leading-tight tracking-wide uppercase group-hover:text-gray-300 transition-colors" style={{ letterSpacing: '0.05em' }}>Sterling</p>
+            <p className="text-[8px] font-medium text-gray-500 leading-tight group-hover:text-gray-400 transition-colors">Wholesale Insurance</p>
+          </div>
+        </Link>
+
+        <nav className="flex flex-col gap-6 flex-1">
+          <Link href="/agency/dashboard" className="p-3 text-gray-400 hover:text-white transition-colors">
+            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+            </svg>
+          </Link>
+        </nav>
+      </aside>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-6">
-          <Link
-            href="/agency/dashboard"
-            className="text-sm text-[#6B6B6B] hover:text-[#4A4A4A] inline-flex items-center gap-1"
-          >
-            ← Back to Dashboard
-          </Link>
-        </div>
-
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h1 className="text-3xl font-bold text-[#4A4A4A] mb-2">Quotes</h1>
-              <p className="text-[#6B6B6B]">View and manage quotes for your submissions</p>
+      <main className="flex-1 ml-[70px] overflow-auto">
+        {/* Header */}
+        <div className="bg-white border-b border-gray-200 px-6 py-4 sticky top-0 z-40">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <Link href="/agency/dashboard" className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                <svg className="w-5 h-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+              </Link>
+              <div>
+                <h1 className="text-xl font-bold text-gray-900">Quotes</h1>
+                <p className="text-sm text-gray-600">View and manage quotes for your submissions</p>
+              </div>
             </div>
-            {/* Filter Dropdown */}
-            <div>
+            <div className="flex items-center gap-4">
+              {/* Filter Dropdown */}
               <select
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value)}
-                className="input-sterling focus-sterling"
+                className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm text-gray-700 font-medium hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-cyan-500"
               >
                 <option value="ALL">All Quotes</option>
                 <option value="POSTED">Posted Quotes</option>
@@ -280,222 +342,298 @@ export default function AgencyQuotesPage() {
                 <option value="BIND_REQUESTED">Bind Requested</option>
                 <option value="BOUND">Bound Policies</option>
               </select>
+              <button
+                onClick={() => signOut({ callbackUrl: "/signin" })}
+                className="text-sm text-gray-600 hover:text-gray-900 font-medium"
+              >
+                Sign Out
+              </button>
             </div>
           </div>
         </div>
 
-        {/* Error Message */}
-        {error && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-            <p className="text-red-600 text-sm">{error}</p>
-          </div>
-        )}
+        {/* Content */}
+        <div className="p-6">
+          {/* Search and Filters Bar */}
+          <div className="bg-white rounded-lg border border-gray-200 p-4 mb-6">
+            <div className="flex flex-col md:flex-row gap-4">
+              {/* Search Input */}
+              <div className="flex-1">
+                <div className="relative">
+                  <svg className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                  <input
+                    type="text"
+                    placeholder="Search by client name, carrier, or submission ID..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+                  />
+                </div>
+              </div>
+              
+              {/* Carrier Filter */}
+              <div className="md:w-48">
+                <select
+                  value={filterCarrier}
+                  onChange={(e) => setFilterCarrier(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+                >
+                  <option value="ALL">All Carriers</option>
+                  {Array.from(new Set(allQuotes.map(q => q.carrierName))).map((carrier) => (
+                    <option key={carrier} value={carrier}>{carrier}</option>
+                  ))}
+                </select>
+              </div>
 
-        {/* Quotes List */}
-        {quotes.length === 0 ? (
-          <div className="card-sterling p-8 text-center">
-            <p className="text-[#6B6B6B]">
-              No quotes available. Quotes will appear here after admin creates them.
-            </p>
+              {/* Clear Filters Button */}
+              {(searchQuery || filterCarrier !== "ALL") && (
+                <button
+                  onClick={() => {
+                    setSearchQuery("");
+                    setFilterCarrier("ALL");
+                  }}
+                  className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+            
+            {/* Results Count */}
+            {(searchQuery || filterCarrier !== "ALL") && (
+              <p className="text-xs text-gray-500 mt-3">
+                Showing {quotes.length} of {allQuotes.length} quotes
+              </p>
+            )}
           </div>
-        ) : (
-          <div className="space-y-6">
-            {quotes.map((quote) => {
-              const isEditing = editingQuoteId === quote._id;
-              const previewFinalAmount = isEditing
-                ? calculateFinalAmount(quote, parseFloat(brokerFee) || 0)
-                : quote.finalAmountUSD;
 
-              return (
-                <div key={quote._id} className="card-sterling p-6">
-                  {quote.status === "APPROVED" && (
-                    <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                      <div className="flex items-center justify-between">
-                        <div className="flex-1">
-                          <p className="text-blue-800 font-semibold mb-2">
-                            ✓ Quote Approved - Ready for Workflow
-                          </p>
-                          <div className="flex items-center gap-4 text-sm">
-                            <span className={`${quote.esignCompleted ? "text-green-600" : "text-gray-500"}`}>
-                              {quote.esignCompleted ? "✓" : "○"} E-Sign
-                            </span>
-                            <span className={`${quote.paymentStatus === "PAID" ? "text-green-600" : "text-gray-500"}`}>
-                              {quote.paymentStatus === "PAID" ? "✓" : "○"} Payment
-                            </span>
-                            <span className="text-gray-500">○ Bind Request</span>
+          {/* Error Message */}
+          {error && (
+            <div className="mb-6 p-4 bg-gradient-to-r from-red-50 to-rose-50 border-l-4 border-red-500 rounded-xl shadow-sm">
+              <div className="flex items-center gap-3">
+                <svg className="w-6 h-6 text-red-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <p className="text-sm font-semibold text-red-800">{error}</p>
+              </div>
+            </div>
+          )}
+
+          {/* Quotes List */}
+          {quotes.length === 0 ? (
+            <div className="bg-white rounded-lg border border-gray-200 p-12 text-center">
+              <div className="w-20 h-20 bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                <svg className="w-10 h-10 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">No Quotes Available</h3>
+              <p className="text-gray-600">
+                Quotes will appear here after admin creates them.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {quotes.map((quote) => {
+                const isEditing = editingQuoteId === quote._id;
+                const previewFinalAmount = isEditing
+                  ? calculateFinalAmount(quote, parseFloat(brokerFee) || 0)
+                  : quote.finalAmountUSD;
+
+                return (
+                  <div key={quote._id} className="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-lg hover:border-cyan-200 transition-all duration-300">
+                    {quote.status === "APPROVED" && (
+                      <div className="mb-4 p-4 bg-gradient-to-r from-blue-50 to-cyan-50 border border-blue-200 rounded-xl">
+                        <div className="flex items-center justify-between">
+                          <div className="flex-1">
+                            <p className="text-blue-800 font-bold mb-2">
+                              ✓ Quote Approved - Ready for Workflow
+                            </p>
+                            <div className="flex items-center gap-4 text-sm">
+                              <span className={`font-semibold ${quote.esignCompleted ? "text-green-600" : "text-gray-500"}`}>
+                                {quote.esignCompleted ? "✓" : "○"} E-Sign
+                              </span>
+                              <span className={`font-semibold ${quote.paymentStatus === "PAID" ? "text-green-600" : "text-gray-500"}`}>
+                                {quote.paymentStatus === "PAID" ? "✓" : "○"} Payment
+                              </span>
+                              <span className="font-semibold text-gray-500">○ Bind Request</span>
+                            </div>
+                            {!quote.esignCompleted && (
+                              <p className="text-xs text-blue-700 mt-2 font-medium">
+                                Next: Generate documents and complete e-signature
+                              </p>
+                            )}
+                            {quote.esignCompleted && quote.paymentStatus !== "PAID" && (
+                              <p className="text-xs text-blue-700 mt-2 font-medium">
+                                Next: Complete payment to proceed
+                              </p>
+                            )}
+                            {quote.esignCompleted && quote.paymentStatus === "PAID" && (
+                              <p className="text-xs text-green-700 mt-2 font-bold">
+                                Ready: Request bind to complete the process
+                              </p>
+                            )}
                           </div>
-                          {!quote.esignCompleted && (
-                            <p className="text-xs text-blue-700 mt-2">
-                              Next: Generate documents and complete e-signature
-                            </p>
-                          )}
-                          {quote.esignCompleted && quote.paymentStatus !== "PAID" && (
-                            <p className="text-xs text-blue-700 mt-2">
-                              Next: Complete payment to proceed
-                            </p>
-                          )}
-                          {quote.esignCompleted && quote.paymentStatus === "PAID" && (
-                            <p className="text-xs text-green-700 mt-2 font-semibold">
-                              Ready: Request bind to complete the process
-                            </p>
-                          )}
+                          <Link
+                            href={`/agency/quotes/${quote._id}`}
+                            className="ml-4 px-4 py-2.5 bg-[#00BCD4] text-white rounded-lg hover:bg-[#00ACC1] font-semibold transition-colors whitespace-nowrap"
+                          >
+                            Manage Workflow →
+                          </Link>
                         </div>
-                        <Link
-                          href={`/agency/quotes/${quote._id}`}
-                          className="ml-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold transition-colors whitespace-nowrap"
-                        >
-                          Manage Workflow →
-                        </Link>
                       </div>
-                    </div>
-                  )}
-                  {quote.status === "BOUND" && (
-                    <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg">
-                      <div className="flex items-center justify-between">
-                        <div className="flex-1">
-                          <p className="text-green-800 font-semibold mb-2">
-                            ✓ Policy Bound Successfully
-                          </p>
-                          <p className="text-sm text-green-700">
-                            Your policy has been bound and is now active. Coverage is in effect.
-                          </p>
+                    )}
+                    {quote.status === "BOUND" && (
+                      <div className="mb-4 p-4 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl">
+                        <div className="flex items-center justify-between">
+                          <div className="flex-1">
+                            <p className="text-green-800 font-bold mb-2">
+                              ✓ Policy Bound Successfully
+                            </p>
+                            <p className="text-sm text-green-700 font-medium">
+                              Your policy has been bound and is now active. Coverage is in effect.
+                            </p>
+                          </div>
+                          <Link
+                            href={`/agency/quotes/${quote._id}`}
+                            className="ml-4 px-4 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 font-semibold transition-colors whitespace-nowrap"
+                          >
+                            View Policy →
+                          </Link>
                         </div>
-                        <Link
-                          href={`/agency/quotes/${quote._id}`}
-                          className="ml-4 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-semibold transition-colors whitespace-nowrap"
-                        >
-                          View Policy →
-                        </Link>
                       </div>
+                    )}
+                    <div className="flex items-start justify-between mb-4">
+                      <div>
+                        <h3 className="text-xl font-bold text-gray-900 mb-1">
+                          {quote.clientName}
+                        </h3>
+                        <p className="text-sm text-gray-600">
+                          Carrier: {quote.carrierName}
+                        </p>
+                      </div>
+                      <span
+                        className={`inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold ${getStatusBadgeColor(
+                          quote.status
+                        )}`}
+                      >
+                        {quote.status}
+                      </span>
                     </div>
-                  )}
-                  <div className="flex items-start justify-between mb-4">
-                    <div>
-                      <h3 className="text-xl font-bold text-[#4A4A4A] mb-1">
-                        {quote.clientName}
-                      </h3>
-                      <p className="text-sm text-[#6B6B6B]">
-                        Carrier: {quote.carrierName}
-                      </p>
-                    </div>
-                    <span
-                      className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${getStatusBadgeColor(
-                        quote.status
-                      )}`}
-                    >
-                      {quote.status}
-                    </span>
-                  </div>
 
-                  {/* Quote Breakdown */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                    <div className="space-y-2">
-                      <div className="flex justify-between">
-                        <span className="text-[#6B6B6B]">Carrier Quote:</span>
-                        <span className="font-semibold text-[#4A4A4A]">
-                          ${quote.carrierQuoteUSD.toFixed(2)}
-                        </span>
+                    {/* Quote Breakdown */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                      <div className="space-y-3">
+                        <div className="flex justify-between py-2 border-b border-gray-200">
+                          <span className="text-sm text-gray-600 font-medium">Carrier Quote:</span>
+                          <span className="font-bold text-gray-900">
+                            ${quote.carrierQuoteUSD.toFixed(2)}
+                          </span>
+                        </div>
+                        {quote.premiumTaxAmountUSD && quote.premiumTaxAmountUSD > 0 && (
+                          <div className="flex justify-between py-2 border-b border-gray-200">
+                            <span className="text-sm text-gray-600 font-medium">
+                              Premium Tax{quote.premiumTaxPercent ? ` (${quote.premiumTaxPercent}%)` : ''}:
+                            </span>
+                            <span className="font-bold text-gray-900">
+                              ${quote.premiumTaxAmountUSD.toFixed(2)}
+                            </span>
+                          </div>
+                        )}
+                        {quote.policyFeeUSD && quote.policyFeeUSD > 0 && (
+                          <div className="flex justify-between py-2 border-b border-gray-200">
+                            <span className="text-sm text-gray-600 font-medium">Policy Fee:</span>
+                            <span className="font-bold text-gray-900">
+                              ${quote.policyFeeUSD.toFixed(2)}
+                            </span>
+                          </div>
+                        )}
+                        <div className="flex justify-between items-center py-2 border-b border-gray-200">
+                          <span className="text-sm text-gray-600 font-medium">Broker Fee:</span>
+                          {isEditing ? (
+                            <div className="flex items-center gap-2">
+                              <span className="text-gray-600">$</span>
+                              <input
+                                type="number"
+                                step="0.01"
+                                min="0"
+                                value={brokerFee}
+                                onChange={(e) => setBrokerFee(e.target.value)}
+                                className="w-24 px-2 py-1 border border-gray-300 rounded-lg text-sm text-right focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                                autoFocus
+                              />
+                              <button
+                                onClick={() => handleSaveBrokerFee(quote._id)}
+                                disabled={submitting}
+                                className="px-3 py-1.5 bg-[#00BCD4] text-white rounded-lg text-sm font-semibold hover:bg-[#00ACC1] disabled:bg-gray-300 transition-colors"
+                              >
+                                Save
+                              </button>
+                              <button
+                                onClick={handleCancelEdit}
+                                className="px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg text-sm font-semibold hover:bg-gray-200 transition-colors"
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-2">
+                              <span className="font-bold text-gray-900">
+                                ${quote.brokerFeeAmountUSD.toFixed(2)}
+                              </span>
+                              <button
+                                onClick={() => handleEditBrokerFee(quote)}
+                                className="text-sm text-[#00BCD4] hover:text-[#00ACC1] font-semibold"
+                              >
+                                Edit
+                              </button>
+                            </div>
+                          )}
+                        </div>
                       </div>
-                      {quote.premiumTaxAmountUSD && quote.premiumTaxAmountUSD > 0 && (
-                        <div className="flex justify-between">
-                          <span className="text-[#6B6B6B]">
-                            Premium Tax{quote.premiumTaxPercent ? ` (${quote.premiumTaxPercent}%)` : ''}:
+                      <div className="border-l border-gray-200 pl-6">
+                        <div className="flex justify-between items-center mb-4">
+                          <span className="text-lg font-bold text-gray-900">
+                            Final Amount:
                           </span>
-                          <span className="font-semibold text-[#4A4A4A]">
-                            ${quote.premiumTaxAmountUSD.toFixed(2)}
-                          </span>
-                        </div>
-                      )}
-                      {quote.policyFeeUSD && quote.policyFeeUSD > 0 && (
-                        <div className="flex justify-between">
-                          <span className="text-[#6B6B6B]">Policy Fee:</span>
-                          <span className="font-semibold text-[#4A4A4A]">
-                            ${quote.policyFeeUSD.toFixed(2)}
+                          <span className="text-2xl font-bold text-[#00BCD4]">
+                            ${previewFinalAmount.toFixed(2)}
                           </span>
                         </div>
-                      )}
-                      <div className="flex justify-between items-center">
-                        <span className="text-[#6B6B6B]">Broker Fee:</span>
-                        {isEditing ? (
-                          <div className="flex items-center gap-2">
-                            <span className="text-[#6B6B6B]">$</span>
-                            <input
-                              type="number"
-                              step="0.01"
-                              min="0"
-                              value={brokerFee}
-                              onChange={(e) => setBrokerFee(e.target.value)}
-                              className="input-sterling focus-sterling w-24 text-right"
-                              autoFocus
-                            />
+                        {quote.status === "POSTED" && (
+                          <div className="mt-4 space-y-2">
+                            {quote.binderPdfUrl && (
+                              <a
+                                href={quote.binderPdfUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center justify-center gap-2 w-full px-4 py-2.5 bg-[#00BCD4] text-white rounded-lg hover:bg-[#00ACC1] transition-colors font-semibold mb-2"
+                              >
+                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                </svg>
+                                Download Binder PDF
+                              </a>
+                            )}
                             <button
-                              onClick={() => handleSaveBrokerFee(quote._id)}
+                              onClick={() => handleApproveQuote(quote._id)}
                               disabled={submitting}
-                              className="btn-sterling text-sm px-3 py-1"
+                              className="w-full px-4 py-2.5 bg-[#00BCD4] text-white rounded-lg hover:bg-[#00ACC1] font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                              Save
-                            </button>
-                            <button
-                              onClick={handleCancelEdit}
-                              className="btn-sterling-secondary text-sm px-3 py-1"
-                            >
-                              Cancel
-                            </button>
-                          </div>
-                        ) : (
-                          <div className="flex items-center gap-2">
-                            <span className="font-semibold text-[#4A4A4A]">
-                              ${quote.brokerFeeAmountUSD.toFixed(2)}
-                            </span>
-                            <button
-                              onClick={() => handleEditBrokerFee(quote)}
-                              className="text-sm text-[#C4A882] hover:underline"
-                            >
-                              Edit
+                              {submitting ? "Approving..." : "Approve Quote"}
                             </button>
                           </div>
                         )}
-                      </div>
-                    </div>
-                    <div className="border-l border-[#E0E0E0] pl-6">
-                      <div className="flex justify-between items-center mb-2">
-                        <span className="text-lg font-bold text-[#4A4A4A]">
-                          Final Amount:
-                        </span>
-                        <span className="text-2xl font-bold text-[#C4A882]">
-                          ${previewFinalAmount.toFixed(2)}
-                        </span>
-                      </div>
-                      {quote.status === "POSTED" && (
-                        <div className="mt-4 space-y-2">
-                          {quote.binderPdfUrl && (
-                            <a
-                              href={quote.binderPdfUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="inline-flex items-center justify-center gap-2 w-full px-4 py-2 bg-[#00BCD4] text-white rounded-lg hover:bg-[#00ACC1] transition-colors font-medium mb-2"
+                        {quote.status === "APPROVED" && (
+                          <div className="mt-4 space-y-3">
+                            <Link
+                              href={`/agency/quotes/${quote._id}`}
+                              className="block w-full px-4 py-2.5 bg-[#00BCD4] text-white rounded-lg hover:bg-[#00ACC1] text-center font-semibold transition-colors"
                             >
-                              <span>📄</span>
-                              <span>Download Binder PDF</span>
-                            </a>
-                          )}
-                          <button
-                            onClick={() => handleApproveQuote(quote._id)}
-                            disabled={submitting}
-                            className="btn-sterling w-full disabled:opacity-50"
-                          >
-                            {submitting ? "Approving..." : "Approve Quote"}
-                          </button>
-                        </div>
-                      )}
-                      {quote.status === "APPROVED" && (
-                        <div className="mt-4 space-y-3">
-                          <Link
-                            href={`/agency/quotes/${quote._id}`}
-                            className="block w-full px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-center font-semibold transition-colors"
-                          >
-                            View Quote Details & Workflow
-                          </Link>
+                              View Quote Details & Workflow
+                            </Link>
                           <FinanceOption
                             quoteId={quote._id}
                             finalAmountUSD={previewFinalAmount}
@@ -505,68 +643,71 @@ export default function AgencyQuotesPage() {
                           />
                         </div>
                       )}
-                      {quote.status === "BOUND" && (
-                        <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
-                          <p className="text-green-800 font-semibold mb-2">
-                            ✓ Policy Bound Successfully
-                          </p>
-                          <p className="text-sm text-green-700">
-                            Your policy has been bound and is now active.
-                          </p>
+                        {quote.status === "BOUND" && (
+                          <div className="mt-4 p-4 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl">
+                            <p className="text-green-800 font-bold mb-2">
+                              ✓ Policy Bound Successfully
+                            </p>
+                            <p className="text-sm text-green-700 font-medium">
+                              Your policy has been bound and is now active.
+                            </p>
+                            <Link
+                              href={`/agency/quotes/${quote._id}`}
+                              className="mt-3 inline-block px-4 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 text-center font-semibold transition-colors"
+                            >
+                              View Policy Details →
+                            </Link>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Binder PDF Download */}
+                    {quote.binderPdfUrl && (
+                      <div className="mt-4 pt-4 border-t border-gray-200">
+                        <a
+                          href={quote.binderPdfUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#00BCD4] text-white rounded-lg hover:bg-[#00ACC1] transition-colors font-semibold"
+                        >
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                          </svg>
+                          Download Binder PDF
+                        </a>
+                      </div>
+                    )}
+
+                    <div className="pt-4 border-t border-gray-200 flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        <Link
+                          href={`/agency/submissions/${quote.submissionId}`}
+                          className="text-sm text-[#00BCD4] hover:text-[#00ACC1] font-semibold"
+                        >
+                          View Submission Details
+                        </Link>
+                        {quote.status === "APPROVED" && (
                           <Link
                             href={`/agency/quotes/${quote._id}`}
-                            className="mt-3 inline-block px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-center font-semibold transition-colors"
+                            className="text-sm text-[#00BCD4] hover:text-[#00ACC1] font-semibold"
                           >
-                            View Policy Details →
+                            Manage Quote Workflow →
                           </Link>
-                        </div>
-                      )}
+                        )}
+                      </div>
+                      <span className="text-xs text-gray-600 font-medium">
+                        Created: {new Date(quote.createdAt).toLocaleDateString()}
+                      </span>
                     </div>
-                  </div>
-
-                  {/* Binder PDF Download */}
-                  {quote.binderPdfUrl && (
-                    <div className="mt-4 pt-4 border-t border-[#E0E0E0]">
-                      <a
-                        href={quote.binderPdfUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-2 px-4 py-2 bg-[#00BCD4] text-white rounded-lg hover:bg-[#00ACC1] transition-colors font-medium"
-                      >
-                        <span>📄</span>
-                        <span>Download Binder PDF</span>
-                      </a>
-                    </div>
-                  )}
-
-                  <div className="pt-4 border-t border-[#E0E0E0] flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <Link
-                        href={`/agency/submissions/${quote.submissionId}`}
-                        className="text-sm text-[#C4A882] hover:underline"
-                      >
-                        View Submission Details
-                      </Link>
-                      {quote.status === "APPROVED" && (
-                        <Link
-                          href={`/agency/quotes/${quote._id}`}
-                          className="text-sm text-blue-600 hover:underline font-medium"
-                        >
-                          Manage Quote Workflow →
-                        </Link>
-                      )}
-                    </div>
-                    <span className="text-xs text-[#6B6B6B]">
-                      Created: {new Date(quote.createdAt).toLocaleDateString()}
-                    </span>
-                  </div>
                 </div>
-              );
-            })}
+                  );
+                })}
+              </div>
+            )}
           </div>
-        )}
-      </main>
-    </div>
-  );
-}
+        </main>
+      </div>
+    );
+  }
 

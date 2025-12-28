@@ -7,6 +7,7 @@ import FormTemplate from "@/models/FormTemplate";
 import { writeFile, mkdir } from "fs/promises";
 import { join } from "path";
 import { existsSync } from "fs";
+import { logActivity, createActivityLogData } from "@/utils/activityLogger";
 
 /**
  * POST /api/submissions
@@ -162,6 +163,29 @@ export async function POST(req: NextRequest) {
       state: isCAOperations ? "CA" : payload.state || "",
     });
 
+    // Log activity: Submission created
+    await logActivity(
+      createActivityLogData(
+        "SUBMISSION_CREATED",
+        `Submission created for ${clientName}`,
+        {
+          submissionId: submission._id.toString(),
+          user: {
+            id: (session.user as any).id,
+            name: (session.user as any).name || (session.user as any).email,
+            email: (session.user as any).email,
+            role: (session.user as any).role || "agency",
+          },
+          details: {
+            templateId: templateId,
+            clientName: clientName,
+            state: submission.state,
+            fileCount: uploadedFiles.length,
+          },
+        }
+      )
+    );
+
     // Route submission to single carrier (new workflow)
     try {
       const Carrier = (await import("@/models/Carrier")).default;
@@ -212,6 +236,28 @@ export async function POST(req: NextRequest) {
         // Update submission status to ROUTED
         submission.status = "ROUTED";
         await submission.save();
+        
+        // Log activity: Submission routed
+        await logActivity(
+          createActivityLogData(
+            "SUBMISSION_ROUTED",
+            `Submission routed to ${carrier.name}`,
+            {
+              submissionId: submission._id.toString(),
+              user: {
+                id: (session.user as any).id,
+                name: (session.user as any).name || (session.user as any).email,
+                email: (session.user as any).email,
+                role: (session.user as any).role || "agency",
+              },
+              details: {
+                carrierId: carrier._id.toString(),
+                carrierName: carrier.name,
+                routingStatus: emailResult.success ? "SENT" : "FAILED",
+              },
+            }
+          )
+        );
         
         console.log(`✅ Submission routed to carrier: ${carrier.name}`);
       }

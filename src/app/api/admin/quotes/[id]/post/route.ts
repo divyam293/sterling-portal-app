@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "../../../../auth/[...nextauth]/route";
 import connectDB from "@/lib/mongodb";
 import Quote from "@/models/Quote";
+import { logActivity, createActivityLogData } from "@/utils/activityLogger";
 
 /**
  * POST /api/admin/quotes/[id]/post
@@ -85,6 +86,30 @@ export async function POST(
         },
       })
       .populate("carrierId", "name email");
+
+    // Log activity: Quote posted
+    const submission = postedQuote!.submissionId as any;
+    await logActivity(
+      createActivityLogData(
+        "QUOTE_CREATED",
+        `Quote posted by admin for ${submission.clientContact?.name || "client"}`,
+        {
+          submissionId: submission._id.toString(),
+          quoteId: postedQuote!._id.toString(),
+          user: {
+            id: (session.user as any).id,
+            name: (session.user as any).name || (session.user as any).email,
+            email: (session.user as any).email,
+            role: (session.user as any).role || "system_admin",
+          },
+          details: {
+            carrierName: (postedQuote!.carrierId as any)?.name,
+            finalAmount: postedQuote!.finalAmountUSD,
+            carrierReference: carrierReference,
+          },
+        }
+      )
+    );
 
     // Send email notification to agency
     try {

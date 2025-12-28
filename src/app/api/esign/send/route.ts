@@ -3,6 +3,8 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "../../auth/[...nextauth]/route";
 import connectDB from "@/lib/mongodb";
 import { ESignService } from "@/lib/services/esign";
+import { logActivity, createActivityLogData } from "@/utils/activityLogger";
+import Quote from "@/models/Quote";
 
 /**
  * POST /api/esign/send
@@ -41,6 +43,33 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
+
+    // Get quote ID if available
+    const quote = await Quote.findOne({ submissionId }).lean();
+    const quoteId = quote?._id?.toString();
+
+    // Log activity: Documents sent for e-signature
+    await logActivity(
+      createActivityLogData(
+        "DOCUMENT_GENERATED",
+        `Documents sent for e-signature`,
+        {
+          submissionId: submissionId,
+          quoteId: quoteId,
+          user: {
+            id: (session.user as any).id,
+            name: (session.user as any).name || (session.user as any).email,
+            email: (session.user as any).email,
+            role: (session.user as any).role || "agency",
+          },
+          details: {
+            envelopeId: result.envelopeId,
+            documentsSent: result.documentsSent,
+            signingUrl: result.signingUrl,
+          },
+        }
+      )
+    );
 
     return NextResponse.json({
       success: true,

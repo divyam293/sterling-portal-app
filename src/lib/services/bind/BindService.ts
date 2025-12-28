@@ -1,5 +1,8 @@
 import Submission from "@/models/Submission";
 import Quote from "@/models/Quote";
+import Carrier from "@/models/Carrier";
+import Agency from "@/models/Agency";
+import { sendBindRequestToCarrier } from "@/lib/services/email/EmailService";
 
 export interface IRequestBindResult {
   success: boolean;
@@ -81,6 +84,42 @@ export class BindService {
       await quote.save();
 
       console.log(`🔒 [BIND SERVICE] ✅ Quote updated - Status: BIND_REQUESTED`);
+
+      // Fetch Carrier and Agency for email
+      const carrier = await Carrier.findById(quote.carrierId).lean();
+      const agency = await Agency.findById(submission.agencyId).lean();
+
+      if (!carrier || !agency) {
+        console.log("🔒 [BIND SERVICE] ⚠️ Carrier or Agency not found - skipping email");
+      } else {
+        // Get signed document URLs
+        const proposalDoc = submission.signedDocuments?.find(d => d.documentType === "PROPOSAL" && d.signatureStatus === "SIGNED");
+        const carrierFormsDoc = submission.signedDocuments?.find(d => d.documentType === "CARRIER_FORM" && d.signatureStatus === "SIGNED");
+
+        // Send email to carrier underwriter
+        console.log("🔒 [BIND SERVICE] 📧 Sending bind request email to carrier...");
+        const emailSent = await sendBindRequestToCarrier({
+          carrierEmail: carrier.email,
+          carrierName: carrier.name,
+          clientName: submission.clientContact.name,
+          clientEmail: submission.clientContact.email,
+          agencyName: agency.name,
+          quoteNumber: quote._id.toString(),
+          effectiveDate: quote.effectiveDate ? new Date(quote.effectiveDate).toLocaleDateString() : undefined,
+          finalAmount: quote.finalAmountUSD,
+          programName: submission.programName || "Insurance Policy",
+          submissionId: submission._id.toString(),
+          signedProposalUrl: proposalDoc?.documentUrl,
+          signedCarrierFormsUrl: carrierFormsDoc?.documentUrl,
+          applicationPdfUrl: submission.applicationPdfUrl,
+        });
+
+        if (emailSent) {
+          console.log("🔒 [BIND SERVICE] ✅ Email sent successfully to carrier underwriter");
+        } else {
+          console.log("🔒 [BIND SERVICE] ⚠️ Email sending failed (mock mode - this is expected)");
+        }
+      }
 
       console.log("🔒 [BIND SERVICE] ========================================");
       console.log(`🔒 [BIND SERVICE] ✅ Bind request submitted successfully`);

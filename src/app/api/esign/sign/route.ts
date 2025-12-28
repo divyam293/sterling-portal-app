@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import connectDB from "@/lib/mongodb";
 import Submission from "@/models/Submission";
+import { logActivity, createActivityLogData } from "@/utils/activityLogger";
+import Quote from "@/models/Quote";
 
 /**
  * POST /api/esign/sign
@@ -72,6 +74,33 @@ export async function POST(req: NextRequest) {
 
     // Save submission
     await submission.save();
+
+    // Get quote ID if available
+    const quote = await Quote.findOne({ submissionId }).lean();
+    const quoteId = quote?._id?.toString();
+
+    // Log activity: Documents signed
+    await logActivity(
+      createActivityLogData(
+        "DOCUMENT_SIGNED",
+        `Documents signed by ${signer.firstName} ${signer.lastName}`,
+        {
+          submissionId: submissionId,
+          quoteId: quoteId,
+          user: {
+            id: signer.email, // Use signer email as ID since this is external
+            name: `${signer.firstName} ${signer.lastName}`,
+            email: signer.email,
+            role: "signer",
+          },
+          details: {
+            envelopeId: envelopeId,
+            documentsSigned: submission.signedDocuments.length,
+            signedAt: signedAt.toISOString(),
+          },
+        }
+      )
+    );
 
     console.log(
       `✅ E-Sign completed for submission ${submissionId} by ${signer.email}`

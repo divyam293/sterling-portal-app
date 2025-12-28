@@ -143,8 +143,8 @@ export default function MarketplacePage() {
 
   return (
     <div className="min-h-screen bg-white flex">
-      {/* Sidebar - Matching ISC */}
-      <aside className={`${sidebarCollapsed ? 'w-[60px]' : 'w-[90px]'} bg-[#3A3C3F] flex flex-col items-center py-6 fixed h-full z-50 transition-all duration-300`}>
+      {/* Sidebar - Matching Dashboard */}
+      <aside className="w-[70px] bg-[#3A3C3F] flex flex-col items-center pt-6 pb-8 fixed h-full z-50 border-r border-gray-700">
         {/* Sterling Premium Logo */}
         <Link href="/agency/dashboard" className="mb-8 group flex flex-col items-center">
           {/* Logo Icon */}
@@ -260,16 +260,34 @@ export default function MarketplacePage() {
       </aside>
 
       {/* Main Content */}
-      <div className={`flex-1 ${sidebarCollapsed ? 'ml-[60px]' : 'ml-[90px]'} transition-all duration-300`}>
-        <main className="min-h-screen flex flex-col">
-          {/* Header */}
-          <div className="text-center pt-16 pb-8">
-            <h1 className="text-5xl font-normal text-gray-900 mb-4">Marketplace</h1>
-            <p className="text-lg text-gray-500">Select industries</p>
+      <main className="flex-1 ml-[70px] overflow-auto">
+        {/* Header */}
+        <div className="bg-white border-b border-gray-200 px-6 py-4 sticky top-0 z-40">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <Link href="/agency/dashboard" className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                <svg className="w-5 h-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+              </Link>
+              <div>
+                <h1 className="text-xl font-bold text-gray-900">Marketplace</h1>
+                <p className="text-sm text-gray-600">Select industries and programs</p>
+              </div>
+            </div>
+            <button
+              onClick={() => router.push('/api/auth/signout')}
+              className="text-sm text-gray-600 hover:text-gray-900 font-medium"
+            >
+              Sign Out
+            </button>
           </div>
+        </div>
 
+        {/* Content */}
+        <div className="p-6">
           {/* Industry Cards Grid */}
-          <div className="flex-1 px-8 pb-8">
+          <div className="flex-1">
             <div className="max-w-7xl mx-auto">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
                 {industries.map((industry) => {
@@ -384,21 +402,21 @@ export default function MarketplacePage() {
           </div>
 
           {/* Continue Button */}
-          <div className="flex justify-end px-8 pb-8">
+          <div className="flex justify-end mt-6">
             <button
               onClick={handleContinue}
               disabled={!selectedProgram}
-              className={`px-8 py-3 rounded-lg text-base font-medium transition-all ${
+              className={`px-8 py-3 rounded-lg text-base font-semibold transition-all ${
                 selectedProgram
-                  ? 'bg-[#00BCD4] text-white hover:bg-[#00ACC1] shadow-lg shadow-[#00BCD4]/30'
+                  ? 'bg-[#00BCD4] text-white hover:bg-[#00ACC1]'
                   : 'bg-gray-200 text-gray-400 cursor-not-allowed'
               }`}
             >
               Continue
             </button>
           </div>
-        </main>
-      </div>
+        </div>
+      </main>
     </div>
   );
 }

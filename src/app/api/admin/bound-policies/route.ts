@@ -95,9 +95,11 @@ export async function GET(req: NextRequest) {
               carrierId: quote.carrierId._id.toString(),
               carrierName: quote.carrierId.name,
               carrierQuoteUSD: quote.carrierQuoteUSD,
-              wholesaleFeeAmountUSD: quote.wholesaleFeeAmountUSD,
+              premiumTaxAmountUSD: quote.premiumTaxAmountUSD,
+              policyFeeUSD: quote.policyFeeUSD,
               brokerFeeAmountUSD: quote.brokerFeeAmountUSD,
               finalAmountUSD: quote.finalAmountUSD,
+              policyNumber: quote.policyNumber,
               status: quote.status,
             }
           : null,

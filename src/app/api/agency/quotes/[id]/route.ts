@@ -33,7 +33,7 @@ export async function GET(
 
     // Get quote with submission
     const quote = await Quote.findById(params.id)
-      .populate("submissionId", "clientContact status esignCompleted paymentStatus agencyId bindRequested bindRequestedAt")
+      .populate("submissionId", "clientContact status esignCompleted esignCompletedAt paymentStatus paymentDate paymentAmount paymentMethod agencyId bindRequested bindRequestedAt bindApproved bindApprovedAt signedDocuments finalPolicyDocuments")
       .populate("carrierId", "name email")
       .lean();
 
@@ -70,9 +70,38 @@ export async function GET(
         status: quote.status,
         submissionStatus: submission.status,
         esignCompleted: submission.esignCompleted || false,
+        esignCompletedAt: submission.esignCompletedAt,
         paymentStatus: submission.paymentStatus || "PENDING",
+        paymentDate: submission.paymentDate,
+        paymentAmount: submission.paymentAmount,
+        paymentMethod: submission.paymentMethod,
+        bindRequested: submission.bindRequested,
+        bindRequestedAt: submission.bindRequestedAt,
+        bindApproved: submission.bindApproved,
+        bindApprovedAt: submission.bindApprovedAt,
+        signedDocuments: submission.signedDocuments,
+        finalPolicyDocuments: submission.finalPolicyDocuments,
         binderPdfUrl: quote.binderPdfUrl,
+        adminNotes: quote.adminNotes,
+        specialNotes: quote.specialNotes,
         createdAt: quote.createdAt,
+      },
+      submission: {
+        _id: submission._id.toString(),
+        clientContact: submission.clientContact,
+        status: submission.status,
+        esignCompleted: submission.esignCompleted || false,
+        esignCompletedAt: submission.esignCompletedAt,
+        paymentStatus: submission.paymentStatus || "PENDING",
+        paymentDate: submission.paymentDate,
+        paymentAmount: submission.paymentAmount,
+        paymentMethod: submission.paymentMethod,
+        bindRequested: submission.bindRequested,
+        bindRequestedAt: submission.bindRequestedAt,
+        bindApproved: submission.bindApproved,
+        bindApprovedAt: submission.bindApprovedAt,
+        signedDocuments: submission.signedDocuments || [],
+        finalPolicyDocuments: submission.finalPolicyDocuments,
       },
     });
   } catch (error: any) {

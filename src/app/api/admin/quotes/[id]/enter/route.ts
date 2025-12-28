@@ -9,6 +9,7 @@ import Agency from "@/models/Agency";
 import { generateBinderHTML } from "@/lib/services/pdf/BinderPDF";
 import { savePDFToStorage } from "@/lib/services/pdf/storage";
 import puppeteer from "puppeteer";
+import { logActivity, createActivityLogData } from "@/utils/activityLogger";
 
 /**
  * POST /api/admin/quotes/[id]/enter
@@ -140,6 +141,30 @@ export async function POST(
       status: "QUOTED",
     });
 
+    // Log activity: Quote created
+    await logActivity(
+      createActivityLogData(
+        "QUOTE_CREATED",
+        `Quote created and posted by admin for ${submission.clientContact?.name || "client"}`,
+        {
+          submissionId: submissionId,
+          quoteId: quote._id.toString(),
+          user: {
+            id: (session.user as any).id,
+            name: (session.user as any).name || (session.user as any).email,
+            email: (session.user as any).email,
+            role: (session.user as any).role || "system_admin",
+          },
+          details: {
+            carrierName: carrier.name,
+            carrierQuoteUSD: carrierQuoteUSD,
+            finalAmountUSD: finalAmountUSD,
+            status: "POSTED",
+          },
+        }
+      )
+    );
+
     // Get agency for binder and email
     const agency = await Agency.findById(submission.agencyId);
 
@@ -214,6 +239,28 @@ export async function POST(
       await Quote.findByIdAndUpdate(quote._id, {
         binderPdfUrl,
       });
+
+      // Log activity: Document generated
+      await logActivity(
+        createActivityLogData(
+          "DOCUMENT_GENERATED",
+          `Binder PDF generated for quote`,
+          {
+            submissionId: submissionId,
+            quoteId: quote._id.toString(),
+            user: {
+              id: (session.user as any).id,
+              name: (session.user as any).name || (session.user as any).email,
+              email: (session.user as any).email,
+              role: (session.user as any).role || "system_admin",
+            },
+            details: {
+              documentType: "BINDER",
+              documentUrl: binderPdfUrl,
+            },
+          }
+        )
+      );
 
       console.log(`✅ Binder PDF generated: ${binderPdfUrl}`);
     } catch (pdfError: any) {

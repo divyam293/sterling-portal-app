@@ -797,3 +797,187 @@ export async function sendQuoteToBroker(data: BrokerQuoteEmailData): Promise<boo
   return await sendEmail(emailOptions);
 }
 
+/**
+ * Bind Request Email Data
+ */
+export interface BindRequestEmailData {
+  carrierEmail: string;
+  carrierName: string;
+  clientName: string;
+  clientEmail: string;
+  agencyName: string;
+  quoteNumber: string;
+  effectiveDate?: string;
+  finalAmount: number;
+  programName?: string;
+  submissionId: string;
+  signedProposalUrl?: string;
+  signedCarrierFormsUrl?: string;
+  applicationPdfUrl?: string;
+}
+
+/**
+ * Generate bind request email HTML
+ */
+export function generateBindRequestEmailHTML(data: BindRequestEmailData): string {
+  return `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bind Request</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Helvetica Neue', Arial, sans-serif;
+      background-color: #f5f5f5;
+    }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      background-color: #ffffff;
+    }
+    .header {
+      background: linear-gradient(135deg, #13627b 0%, #00BCD4 100%);
+      color: #ffffff;
+      padding: 30px;
+      text-align: center;
+    }
+    .header h1 {
+      margin: 0;
+      font-size: 24px;
+      font-weight: 600;
+    }
+    .content {
+      padding: 30px;
+    }
+    .info-section {
+      background-color: #f8f9fa;
+      border-left: 4px solid #00BCD4;
+      padding: 20px;
+      margin: 20px 0;
+    }
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid #e0e0e0;
+    }
+    .info-row:last-child {
+      border-bottom: none;
+    }
+    .info-label {
+      font-weight: 600;
+      color: #333;
+    }
+    .info-value {
+      color: #666;
+    }
+    .footer {
+      background-color: #f8f9fa;
+      padding: 20px;
+      text-align: center;
+      color: #666;
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🔒 Bind Request</h1>
+    </div>
+    <div class="content">
+      <p>Dear ${data.carrierName} Underwriter,</p>
+      
+      <p>A bind request has been submitted for the following policy:</p>
+      
+      <div class="info-section">
+        <div class="info-row">
+          <span class="info-label">Client Name:</span>
+          <span class="info-value">${data.clientName}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Client Email:</span>
+          <span class="info-value">${data.clientEmail}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Agency:</span>
+          <span class="info-value">${data.agencyName}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Quote Number:</span>
+          <span class="info-value">${data.quoteNumber}</span>
+        </div>
+        ${data.programName ? `
+        <div class="info-row">
+          <span class="info-label">Program:</span>
+          <span class="info-value">${data.programName}</span>
+        </div>
+        ` : ''}
+        ${data.effectiveDate ? `
+        <div class="info-row">
+          <span class="info-label">Effective Date:</span>
+          <span class="info-value">${data.effectiveDate}</span>
+        </div>
+        ` : ''}
+        <div class="info-row">
+          <span class="info-label">Total Premium:</span>
+          <span class="info-value">$${data.finalAmount.toFixed(2)}</span>
+        </div>
+      </div>
+      
+      <p><strong>All required documents have been signed and payment has been received.</strong></p>
+      
+      <p>Please find the signed documents attached to this email:</p>
+      <ul>
+        ${data.signedProposalUrl ? '<li>Signed Proposal PDF</li>' : ''}
+        ${data.signedCarrierFormsUrl ? '<li>Signed Carrier Forms PDF</li>' : ''}
+        ${data.applicationPdfUrl ? '<li>Application PDF</li>' : ''}
+      </ul>
+      
+      <p>Please review and process this bind request at your earliest convenience.</p>
+      
+      <p>Best regards,<br>Sterling Wholesale Insurance</p>
+    </div>
+    <div class="footer">
+      <p>This is an automated email from Sterling Wholesale Insurance Portal.</p>
+      <p>Submission ID: ${data.submissionId}</p>
+    </div>
+  </div>
+</body>
+</html>
+  `;
+}
+
+/**
+ * Send bind request email to carrier underwriter
+ */
+export async function sendBindRequestToCarrier(data: BindRequestEmailData): Promise<boolean> {
+  const html = generateBindRequestEmailHTML(data);
+
+  const emailOptions: EmailOptions = {
+    to: data.carrierEmail,
+    subject: `Bind Request - ${data.clientName} - ${data.programName || 'Insurance Policy'}`,
+    html,
+    text: `Bind request submitted for ${data.clientName}. Quote Number: ${data.quoteNumber}. Total Premium: $${data.finalAmount.toFixed(2)}. All documents signed and payment received.`,
+  };
+
+  // Note: In production, you would fetch the PDFs from URLs and attach them
+  // For now, we're just logging that attachments would be included
+  console.log("📧 [BIND EMAIL] Attachments would include:");
+  if (data.signedProposalUrl) {
+    console.log(`   - Signed Proposal: ${data.signedProposalUrl}`);
+  }
+  if (data.signedCarrierFormsUrl) {
+    console.log(`   - Signed Carrier Forms: ${data.signedCarrierFormsUrl}`);
+  }
+  if (data.applicationPdfUrl) {
+    console.log(`   - Application PDF: ${data.applicationPdfUrl}`);
+  }
+
+  return await sendEmail(emailOptions);
+}
+

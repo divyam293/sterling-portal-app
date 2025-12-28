@@ -6,6 +6,7 @@ import Submission from "@/models/Submission";
 import Quote from "@/models/Quote";
 import FinancePlan from "@/models/FinancePlan";
 import { PDFService } from "@/lib/services/pdf";
+import { logActivity, createActivityLogData } from "@/utils/activityLogger";
 
 /**
  * POST /api/documents/generate-finance-agreement
@@ -97,6 +98,28 @@ export async function POST(req: NextRequest) {
         { status: 500 }
       );
     }
+
+    // Log activity: Document generated
+    await logActivity(
+      createActivityLogData(
+        "DOCUMENT_GENERATED",
+        `Finance Agreement PDF generated for quote`,
+        {
+          submissionId: submissionId,
+          quoteId: quote._id.toString(),
+          user: {
+            id: (session.user as any).id,
+            name: (session.user as any).name || (session.user as any).email,
+            email: (session.user as any).email,
+            role: (session.user as any).role || "agency",
+          },
+          details: {
+            documentType: "FINANCE_AGREEMENT",
+            documentUrl: result.documentUrl,
+          },
+        }
+      )
+    );
 
     console.log(`📋 [API] ✅ Finance Agreement PDF generated successfully for submission ${submissionId}`);
     console.log(`📋 [API] Document URL: ${result.documentUrl}`);

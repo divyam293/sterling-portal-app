@@ -6,6 +6,7 @@ import Quote from "@/models/Quote";
 import Submission from "@/models/Submission";
 import Carrier from "@/models/Carrier";
 import RoutingLog from "@/models/RoutingLog";
+import { logActivity, createActivityLogData } from "@/utils/activityLogger";
 
 /**
  * POST /api/admin/quotes
@@ -107,6 +108,29 @@ export async function POST(req: NextRequest) {
     await Submission.findByIdAndUpdate(submissionId, {
       status: "QUOTED",
     });
+
+    // Log activity: Quote created
+    await logActivity(
+      createActivityLogData(
+        "QUOTE_CREATED",
+        `Quote created by admin for ${submission.clientContact?.name || "client"}`,
+        {
+          submissionId: submissionId,
+          quoteId: quote._id.toString(),
+          user: {
+            id: (session.user as any).id,
+            name: (session.user as any).name || (session.user as any).email,
+            email: (session.user as any).email,
+            role: (session.user as any).role || "system_admin",
+          },
+          details: {
+            carrierName: carrier.name,
+            carrierQuoteUSD: carrierQuoteUSD,
+            finalAmountUSD: finalAmountUSD,
+          },
+        }
+      )
+    );
 
     return NextResponse.json({
       success: true,

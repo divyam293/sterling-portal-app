@@ -81,6 +81,20 @@ export interface ISubmission extends Document {
   bindApprovedAt?: Date;
   bindStatus?: "NOT_REQUESTED" | "REQUESTED" | "BOUND";
   
+  // Final Policy Documents (uploaded by admin after carrier issues policy)
+  finalPolicyDocuments?: {
+    finalBinderPdfUrl?: string;
+    finalBinderUploadedAt?: Date;
+    finalPolicyPdfUrl?: string;
+    finalPolicyUploadedAt?: Date;
+    certificateOfInsuranceUrl?: string;
+    certificateUploadedAt?: Date;
+    uploadedByAdminId?: mongoose.Types.ObjectId;
+  };
+  
+  // Admin notes (internal notes visible to agencies)
+  adminNotes?: string;
+  
   createdAt: Date;
   updatedAt: Date;
 }
@@ -229,6 +243,23 @@ const SubmissionSchema: Schema = new Schema(
       enum: ["NOT_REQUESTED", "REQUESTED", "BOUND"],
       default: "NOT_REQUESTED",
       index: true,
+    },
+    // Final Policy Documents (uploaded by admin after carrier issues policy)
+    finalPolicyDocuments: {
+      finalBinderPdfUrl: String,
+      finalBinderUploadedAt: Date,
+      finalPolicyPdfUrl: String,
+      finalPolicyUploadedAt: Date,
+      certificateOfInsuranceUrl: String,
+      certificateUploadedAt: Date,
+      uploadedByAdminId: {
+        type: Schema.Types.ObjectId,
+        ref: "User",
+      },
+    },
+    adminNotes: {
+      type: String,
+      trim: true,
     },
   },
   {

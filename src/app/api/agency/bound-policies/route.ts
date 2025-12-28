@@ -7,7 +7,7 @@ import Quote from "@/models/Quote";
 
 /**
  * GET /api/agency/bound-policies
- * Get all bound policies for the authenticated agency
+ * Get all bound policies for the logged-in agency
  */
 export async function GET(req: NextRequest) {
   try {
@@ -31,89 +31,56 @@ export async function GET(req: NextRequest) {
 
     await connectDB();
 
-    const agencyId = (session.user as any).agencyId;
-
     // Ensure models are registered
     await import("@/models/Carrier");
 
-    // Fetch submissions where bindApproved = true AND belongs to this agency
+    const agencyId = (session.user as any).agencyId;
+
+    // Fetch all bound submissions for this agency
     const submissions = await Submission.find({
       agencyId,
+      status: "BOUND",
       bindApproved: true,
     })
-      .populate("templateId", "industry subcategory")
-      .sort({ bindApprovedAt: -1 }) // Most recently approved first
+      .sort({ bindApprovedAt: -1 })
       .lean();
 
-    // Get quotes for these submissions
-    const submissionIds = submissions.map((s) => s._id);
-    const quotes = await Quote.find({
-      submissionId: { $in: submissionIds },
-    })
-      .populate("carrierId", "name")
-      .lean();
+    // Fetch quotes for each submission
+    const policiesWithQuotes = await Promise.all(
+      submissions.map(async (submission) => {
+        const quote = await Quote.findOne({ submissionId: submission._id })
+          .populate("carrierId", "name")
+          .lean();
 
-    // Create a map of submissionId -> quote for easy lookup
-    const quoteMap = new Map();
-    quotes.forEach((quote: any) => {
-      quoteMap.set(quote.submissionId.toString(), quote);
-    });
+        console.log(`📋 Submission ${submission._id}:`, {
+          clientName: submission.clientContact?.name,
+          finalPolicyDocuments: submission.finalPolicyDocuments,
+        });
 
-    // Combine submission and quote data
-    const boundPolicies = submissions.map((submission: any) => {
-      const quote = quoteMap.get(submission._id.toString());
-      return {
-        _id: submission._id.toString(),
-        clientContact: submission.clientContact,
-        templateId: submission.templateId
-          ? {
-              _id: submission.templateId._id.toString(),
-              industry: submission.templateId.industry,
-              subcategory: submission.templateId.subcategory,
-            }
-          : null,
-        status: submission.status,
-        bindRequested: submission.bindRequested,
-        bindRequestedAt: submission.bindRequestedAt,
-        bindApproved: submission.bindApproved,
-        bindApprovedAt: submission.bindApprovedAt,
-        bindStatus: submission.bindStatus,
-        esignCompleted: submission.esignCompleted,
-        esignCompletedAt: submission.esignCompletedAt,
-        paymentStatus: submission.paymentStatus,
-        paymentDate: submission.paymentDate,
-        paymentAmount: submission.paymentAmount,
-        paymentMethod: submission.paymentMethod,
-        quote: quote
-          ? {
-              _id: quote._id.toString(),
-              carrierId: quote.carrierId._id.toString(),
-              carrierName: quote.carrierId.name,
-              carrierQuoteUSD: quote.carrierQuoteUSD,
-              wholesaleFeeAmountUSD: quote.wholesaleFeeAmountUSD,
-              brokerFeeAmountUSD: quote.brokerFeeAmountUSD,
-              finalAmountUSD: quote.finalAmountUSD,
-              status: quote.status,
-            }
-          : null,
-        createdAt: submission.createdAt,
-      };
-    });
+        return {
+          ...submission,
+          quote: quote ? {
+            _id: quote._id.toString(),
+            carrierName: (quote.carrierId as any)?.name || "Unknown Carrier",
+            finalAmountUSD: quote.finalAmountUSD,
+            effectiveDate: quote.effectiveDate,
+            expirationDate: quote.expirationDate,
+            policyNumber: quote.policyNumber,
+          } : null,
+        };
+      })
+    );
 
     return NextResponse.json({
       success: true,
-      policies: boundPolicies,
-      count: boundPolicies.length,
+      policies: policiesWithQuotes,
+      count: policiesWithQuotes.length,
     });
   } catch (error: any) {
     console.error("Agency bound policies error:", error);
     return NextResponse.json(
-      {
-        success: false,
-        error: error.message || "Failed to fetch bound policies",
-      },
+      { error: error.message || "Failed to fetch bound policies" },
       { status: 500 }
     );
   }
 }
-

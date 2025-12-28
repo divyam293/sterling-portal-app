@@ -8,6 +8,7 @@ import Carrier from "@/models/Carrier";
 import { generateCarrierFormsHTML } from "@/lib/services/pdf";
 import { savePDFToStorage } from "@/lib/services/pdf/storage";
 import puppeteer from "puppeteer";
+import { logActivity, createActivityLogData } from "@/utils/activityLogger";
 
 /**
  * GET /api/agency/quotes/[id]/carrier-forms-pdf
@@ -109,6 +110,28 @@ export async function GET(
     // Save PDF to storage
     const fileName = `carrier-forms-${quote._id.toString()}.pdf`;
     const pdfUrl = await savePDFToStorage(pdfBuffer, fileName);
+
+    // Log activity: Document generated
+    await logActivity(
+      createActivityLogData(
+        "DOCUMENT_GENERATED",
+        `Carrier Forms PDF generated for quote`,
+        {
+          submissionId: submission._id.toString(),
+          quoteId: quote._id.toString(),
+          user: {
+            id: (session.user as any).id,
+            name: (session.user as any).name || (session.user as any).email,
+            email: (session.user as any).email,
+            role: (session.user as any).role || "agency",
+          },
+          details: {
+            documentType: "CARRIER_FORM",
+            documentUrl: pdfUrl,
+          },
+        }
+      )
+    );
 
     // Return PDF as response
     return new NextResponse(pdfBuffer, {

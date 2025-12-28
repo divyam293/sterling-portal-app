@@ -4,6 +4,8 @@ import { authOptions } from "../../auth/[...nextauth]/route";
 import connectDB from "@/lib/mongodb";
 import Submission from "@/models/Submission";
 import { BindService } from "@/lib/services/bind";
+import { logActivity, createActivityLogData } from "@/utils/activityLogger";
+import Quote from "@/models/Quote";
 
 /**
  * POST /api/bind/request
@@ -63,6 +65,31 @@ export async function POST(req: NextRequest) {
 
     // Use BindService to handle the bind request logic
     const result = await BindService.requestBind(submissionId);
+
+    // Get quote ID if available
+    const quote = await Quote.findOne({ submissionId }).lean();
+    const quoteId = quote?._id?.toString();
+
+    // Log activity: Bind requested
+    await logActivity(
+      createActivityLogData(
+        "BIND_REQUESTED",
+        `Bind requested for submission`,
+        {
+          submissionId: submissionId,
+          quoteId: quoteId,
+          user: {
+            id: (session.user as any).id,
+            name: (session.user as any).name || (session.user as any).email,
+            email: (session.user as any).email,
+            role: (session.user as any).role || "agency",
+          },
+          details: {
+            clientName: submission.clientContact?.name,
+          },
+        }
+      )
+    );
 
     return NextResponse.json({
       success: true,

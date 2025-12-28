@@ -4,6 +4,7 @@ import { authOptions } from "../../auth/[...nextauth]/route";
 import connectDB from "@/lib/mongodb";
 import Submission from "@/models/Submission";
 import Quote from "@/models/Quote";
+import { logActivity, createActivityLogData } from "@/utils/activityLogger";
 
 /**
  * POST /api/bind/approve
@@ -117,6 +118,28 @@ export async function POST(req: NextRequest) {
     console.log(`🔒 [BIND APPROVE] Verified quote save:`, {
       status: verifyQuote?.status,
     });
+
+    // Log activity: Bind approved / Policy bound
+    await logActivity(
+      createActivityLogData(
+        "POLICY_BOUND",
+        `Policy bound by admin`,
+        {
+          submissionId: submissionId,
+          quoteId: quote._id.toString(),
+          user: {
+            id: (session.user as any).id,
+            name: (session.user as any).name || (session.user as any).email,
+            email: (session.user as any).email,
+            role: (session.user as any).role || "system_admin",
+          },
+          details: {
+            clientName: submission.clientContact?.name,
+            bindApprovedAt: bindApprovedAt.toISOString(),
+          },
+        }
+      )
+    );
 
     console.log(`✅ Bind request approved for submission ${submissionId}`);
     console.log(`   Submission status: BOUND`);

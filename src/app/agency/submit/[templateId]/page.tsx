@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter, useParams } from "next/navigation";
+import { useRouter, useParams, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
+import { toast } from "sonner";
 import DynamicForm from "@/components/DynamicForm";
 import type { IFormTemplate } from "@/models/FormTemplate";
 
@@ -11,13 +12,17 @@ export default function SubmitFormPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const params = useParams();
+  const searchParams = useSearchParams();
   const templateId = params?.templateId as string;
+  const editSubmissionId = searchParams?.get("edit");
 
   const [template, setTemplate] = useState<IFormTemplate | null>(null);
+  const [existingSubmission, setExistingSubmission] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
 
   const [clientName, setClientName] = useState("");
   const [clientPhone, setClientPhone] = useState("");
@@ -41,27 +46,106 @@ export default function SubmitFormPage() {
   useEffect(() => {
     if (status === "authenticated" && templateId) {
       setLoading(true);
-      fetch(`/api/forms?templateId=${templateId}`)
-        .then((res) => res.json())
-        .then((data) => {
-          if (data.templates && data.templates.length > 0) {
-            setTemplate(data.templates[0]);
-            setIsCAOperations(data.templates[0].stateSpecific || false);
-            setError("");
-          } else if (data.error) {
-            setError(data.error || "Template not found");
-          } else {
-            setError("Template not found");
-          }
-          setLoading(false);
-        })
-        .catch((err) => {
-          console.error("Error fetching template:", err);
-          setError("Failed to load form template. Please try again.");
-          setLoading(false);
-        });
+      
+      // Check if we're in edit mode
+      if (editSubmissionId) {
+        setIsEditMode(true);
+        // Fetch existing submission data
+        fetch(`/api/agency/submissions/${editSubmissionId}`)
+          .then((res) => {
+            if (!res.ok) {
+              throw new Error("Failed to fetch submission");
+            }
+            return res.json();
+          })
+          .then((submissionData) => {
+            if (submissionData.submission) {
+              const sub = submissionData.submission;
+              
+              // Check if submission can be edited
+              if (sub.status !== "ENTERED" && sub.status !== "DRAFT") {
+                setError(`This submission cannot be edited. Current status: ${sub.status}`);
+                setLoading(false);
+                return;
+              }
+              
+              // Check if submission has routing logs (cannot edit if already routed)
+              if (submissionData.routingLogs && submissionData.routingLogs.length > 0) {
+                setError("This submission cannot be edited. It has already been routed to carriers.");
+                setLoading(false);
+                return;
+              }
+              
+              setExistingSubmission(sub);
+              
+              // Pre-populate form fields
+              if (sub.clientContact) {
+                setClientName(sub.clientContact.name || "");
+                setClientPhone(sub.clientContact.phone || "");
+                setClientEmail(sub.clientContact.email || "");
+                setClientEIN(sub.clientContact.EIN || "");
+                if (sub.clientContact.businessAddress) {
+                  setClientStreet(sub.clientContact.businessAddress.street || "");
+                  setClientCity(sub.clientContact.businessAddress.city || "");
+                  setClientState(sub.clientContact.businessAddress.state || "CA");
+                  setClientZip(sub.clientContact.businessAddress.zip || "");
+                }
+              }
+              setCcpaConsent(sub.ccpaConsent || false);
+              setClientState(sub.state || "CA");
+              
+              // Set template ID from submission (use submission's template, not URL param)
+              if (sub.templateId?._id) {
+                const subTemplateId = sub.templateId._id;
+                // Fetch template
+                return fetch(`/api/forms?templateId=${subTemplateId}`);
+              }
+            }
+            // Fallback to original templateId
+            return fetch(`/api/forms?templateId=${templateId}`);
+          })
+          .then((res) => res?.json())
+          .then((data) => {
+            if (data?.templates && data.templates.length > 0) {
+              setTemplate(data.templates[0]);
+              setIsCAOperations(data.templates[0].stateSpecific || false);
+              setError("");
+            } else if (data?.error) {
+              setError(data.error || "Template not found");
+            } else {
+              setError("Template not found");
+            }
+            setLoading(false);
+          })
+          .catch((err) => {
+            console.error("Error fetching data:", err);
+            setError(err.message || "Failed to load submission data. Please try again.");
+            setLoading(false);
+          });
+      } else {
+        // Normal mode - just fetch template
+        fetch(`/api/forms?templateId=${templateId}`)
+          .then((res) => res.json())
+          .then((data) => {
+            if (data.templates && data.templates.length > 0) {
+              setTemplate(data.templates[0]);
+              setIsCAOperations(data.templates[0].stateSpecific || false);
+              setError("");
+            } else if (data.error) {
+              setError(data.error || "Template not found");
+            } else {
+              setError("Template not found");
+            }
+            setLoading(false);
+          })
+          .catch((err) => {
+            console.error("Error fetching template:", err);
+            setError("Failed to load form template. Please try again.");
+            setLoading(false);
+          });
+      }
     }
-  }, [status, templateId]);
+  }, [status, templateId, editSubmissionId]);
 
   useEffect(() => {
     if (status === "authenticated") {
@@ -108,7 +192,8 @@ export default function SubmitFormPage() {
       setError("Business zip code is required");
       return;
     }
-    if (!selectedCarrierId) {
+    // Carrier selection only required for new submissions
+    if (!isEditMode && !selectedCarrierId) {
       setError("Please select a carrier");
       return;
     }
@@ -155,22 +240,46 @@ export default function SubmitFormPage() {
       formDataToSend.append("templateId", templateId);
       formDataToSend.append("ccpaConsent", ccpaConsent.toString());
       formDataToSend.append("isCAOperations", isCAOperations.toString());
-      formDataToSend.append("carrierId", selectedCarrierId);
+      // Only append carrierId if provided (not required in edit mode)
+      if (selectedCarrierId) {
+        formDataToSend.append("carrierId", selectedCarrierId);
+      }
 
-      const response = await fetch("/api/submissions", {
-        method: "POST",
+      // Use PATCH for edit mode, POST for new submission
+      const url = isEditMode && editSubmissionId 
+        ? `/api/agency/submissions/${editSubmissionId}`
+        : "/api/submissions";
+      const method = isEditMode && editSubmissionId ? "PATCH" : "POST";
+
+      const response = await fetch(url, {
+        method: method,
         body: formDataToSend,
       });
 
       const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(result.error || "Failed to submit application");
+        throw new Error(result.error || isEditMode ? "Failed to update application" : "Failed to submit application");
+      }
+
+      // Show success toast
+      if (isEditMode) {
+        toast.success("Submission updated successfully!", {
+          description: "Your changes have been saved.",
+        });
+      } else {
+        toast.success("Application submitted successfully!", {
+          description: "Your submission has been received.",
+        });
       }
 
       setSuccess(true);
       setTimeout(() => {
-        router.push("/agency/dashboard?submitted=true");
+        if (isEditMode) {
+          router.push(`/agency/submissions/${editSubmissionId}?updated=true`);
+        } else {
+          router.push("/agency/dashboard?submitted=true");
+        }
       }, 2000);
     } catch (err: any) {
       console.error("Submission error:", err);
@@ -242,8 +351,10 @@ export default function SubmitFormPage() {
             </svg>
           </div>
           <h2 className="text-3xl font-bold text-gray-900 mb-3">Success!</h2>
-          <p className="text-gray-600 mb-2 text-lg">Your application has been submitted successfully.</p>
-          <p className="text-sm text-gray-500 mb-8">Redirecting to dashboard...</p>
+          <p className="text-gray-600 mb-2 text-lg">
+            {isEditMode ? "Your application has been updated successfully." : "Your application has been submitted successfully."}
+          </p>
+          <p className="text-sm text-gray-500 mb-8">Redirecting...</p>
           <div className="flex items-center justify-center gap-1">
             <div className="w-2 h-2 bg-indigo-600 rounded-full animate-pulse"></div>
             <div className="w-2 h-2 bg-indigo-600 rounded-full animate-pulse animation-delay-100"></div>
@@ -323,8 +434,22 @@ export default function SubmitFormPage() {
 
         {/* Form Title */}
         <div className="mb-10">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2 tracking-tight">{template?.title || "Application Form"}</h1>
+          <div className="flex items-center gap-3 mb-2">
+            {isEditMode && (
+              <span className="px-3 py-1 bg-amber-100 text-amber-800 border border-amber-200 rounded-lg text-sm font-semibold">
+                Edit Mode
+              </span>
+            )}
+            <h1 className="text-4xl font-bold text-gray-900 tracking-tight">
+              {isEditMode ? "Edit Application" : template?.title || "Application Form"}
+            </h1>
+          </div>
           {template?.description && <p className="text-lg text-gray-600">{template.description}</p>}
+          {isEditMode && existingSubmission && (
+            <p className="text-sm text-gray-500 mt-2">
+              Submission ID: {existingSubmission.submissionId || existingSubmission._id.slice(-8)}
+            </p>
+          )}
         </div>
 
         {/* Client Contact Information */}
@@ -418,30 +543,50 @@ export default function SubmitFormPage() {
             </div>
           </div>
 
-          {/* Carrier Selection */}
-          <div className="mt-8 pt-8 border-t border-gray-200">
-            <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-              <svg className="w-5 h-5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-              </svg>
-              Insurance Carrier
-            </h3>
-            <div>
-              <label className="text-sm font-bold text-gray-900 mb-2 block">Select Carrier <span className="text-red-500">*</span></label>
-              <select value={selectedCarrierId} onChange={(e) => setSelectedCarrierId(e.target.value)} required className="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl text-gray-900 font-medium focus:outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 transition-all hover:border-gray-300">
-                <option value="">Select a carrier...</option>
-                {carriers.map((carrier) => (
-                  <option key={carrier._id} value={carrier._id}>{carrier.name} - {carrier.email}</option>
-                ))}
-              </select>
-              <p className="text-sm text-gray-500 mt-2 flex items-center gap-1.5">
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          {/* Carrier Selection - Only show for new submissions */}
+          {!isEditMode && (
+            <div className="mt-8 pt-8 border-t border-gray-200">
+              <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                <svg className="w-5 h-5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                </svg>
+                Insurance Carrier
+              </h3>
+              <div>
+                <label className="text-sm font-bold text-gray-900 mb-2 block">Select Carrier <span className="text-red-500">*</span></label>
+                <select value={selectedCarrierId} onChange={(e) => setSelectedCarrierId(e.target.value)} required className="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl text-gray-900 font-medium focus:outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 transition-all hover:border-gray-300">
+                  <option value="">Select a carrier...</option>
+                  {carriers.map((carrier) => (
+                    <option key={carrier._id} value={carrier._id}>{carrier.name} - {carrier.email}</option>
+                  ))}
+                </select>
+                <p className="text-sm text-gray-500 mt-2 flex items-center gap-1.5">
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  The submission will be routed to the selected carrier for review
+                </p>
+              </div>
+            </div>
+          )}
+          
+          {/* Edit Mode Info */}
+          {isEditMode && (
+            <div className="mt-8 p-6 bg-amber-50 border-2 border-amber-200 rounded-xl">
+              <div className="flex items-start gap-3">
+                <svg className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                The submission will be routed to the selected carrier for review
-              </p>
+                <div>
+                  <p className="text-sm font-bold text-amber-900 mb-1">Editing Submission</p>
+                  <p className="text-xs text-amber-800">
+                    You are editing an existing submission. Changes will update the submission data. 
+                    Carrier selection is not available in edit mode as the submission may have already been routed.
+                  </p>
+                </div>
+              </div>
             </div>
-          </div>
+          )}
         </div>
 
         {/* CCPA Consent */}
@@ -480,7 +625,12 @@ export default function SubmitFormPage() {
                 <p className="text-sm text-gray-600">Complete all required fields below</p>
               </div>
             </div>
-            <DynamicForm fields={template.fields} onSubmit={handleFormSubmit} isLoading={submitting} />
+            <DynamicForm 
+              fields={template.fields} 
+              onSubmit={handleFormSubmit} 
+              isLoading={submitting}
+              initialValues={isEditMode && existingSubmission?.payload ? existingSubmission.payload : undefined}
+            />
           </div>
         )}
 

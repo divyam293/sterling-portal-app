@@ -8,7 +8,7 @@ import Agency from "@/models/Agency";
 import Carrier from "@/models/Carrier";
 import { generateProposalHTML } from "@/lib/services/pdf";
 import { savePDFToStorage } from "@/lib/services/pdf/storage";
-import puppeteer from "puppeteer";
+import { getPuppeteerBrowser } from "@/lib/utils/puppeteer";
 import { logActivity, createActivityLogData } from "@/utils/activityLogger";
 
 /**
@@ -112,11 +112,7 @@ export async function GET(
     const htmlContent = generateProposalHTML(proposalData);
 
     // Generate PDF using puppeteer
-    const browser = await puppeteer.launch({
-      headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox'],
-      timeout: 30000,
-    });
+    const browser = await getPuppeteerBrowser();
     const page = await browser.newPage();
     await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
     const pdfUint8Array = await page.pdf({

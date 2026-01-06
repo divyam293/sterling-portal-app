@@ -5,7 +5,7 @@ import connectDB from "@/lib/mongodb";
 import Submission from "@/models/Submission";
 import Agency from "@/models/Agency";
 import { generateApplicationHTML } from "@/lib/services/pdf/ApplicationPDF";
-import puppeteer from "puppeteer";
+import { getPuppeteerBrowser } from "@/lib/utils/puppeteer";
 import { savePDFToStorage } from "@/lib/services/pdf/storage";
 
 /**
@@ -105,11 +105,7 @@ export async function POST(req: NextRequest) {
 
       // Generate PDF using puppeteer
       console.log("📄 Launching Puppeteer browser...");
-      const browser = await puppeteer.launch({
-        headless: true,
-        args: ['--no-sandbox', '--disable-setuid-sandbox'],
-        timeout: 30000, // 30 second timeout
-      });
+      const browser = await getPuppeteerBrowser();
       console.log("📄 Browser launched successfully");
       
       const page = await browser.newPage();

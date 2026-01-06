@@ -4,7 +4,7 @@ import { authOptions } from "@/lib/authOptions";
 import connectDB from "@/lib/mongodb";
 import Agency from "@/models/Agency";
 import { generateApplicationHTML } from "@/lib/services/pdf/ApplicationPDF";
-import puppeteer from "puppeteer";
+import { getPuppeteerBrowser } from "@/lib/utils/puppeteer";
 
 /**
  * POST /api/agency/applications/preview-pdf
@@ -45,11 +45,7 @@ export async function POST(req: NextRequest) {
     const htmlContent = generateApplicationHTML(applicationData);
 
     // Generate PDF using puppeteer
-    const browser = await puppeteer.launch({
-      headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox'],
-      timeout: 30000,
-    });
+    const browser = await getPuppeteerBrowser();
     const page = await browser.newPage();
     await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
     const pdfUint8Array = await page.pdf({

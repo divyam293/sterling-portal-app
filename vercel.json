@@ -8,6 +8,12 @@
   "functions": {
     "app/api/**/*.ts": {
       "maxDuration": 30
+    },
+    "app/api/**/*pdf*/**/*.ts": {
+      "maxDuration": 60
+    },
+    "app/api/**/generate-documents/**/*.ts": {
+      "maxDuration": 60
     }
   },
   "rewrites": [

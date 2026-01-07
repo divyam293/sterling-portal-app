@@ -73,13 +73,20 @@ export async function generatePDFFromHTML(options: PDFGenerationOptions): Promis
       });
 
       if (!response.ok) {
-        throw new Error(`PDFShift API error: ${response.statusText}`);
+        const errorText = await response.text().catch(() => 'Unknown error');
+        console.error('[PDF Service] PDFShift API error:', response.status, errorText);
+        throw new Error(`PDFShift API error (${response.status}): ${errorText}`);
       }
 
       const pdfBuffer = Buffer.from(await response.arrayBuffer());
+      console.log('[PDF Service] PDFShift success - PDF generated:', pdfBuffer.length, 'bytes');
       return pdfBuffer;
     } catch (error: any) {
       console.error('[PDF Service] PDFShift failed:', error.message);
+      // Don't fall through to Puppeteer in production - throw the error
+      if (process.env.VERCEL || process.env.NODE_ENV === 'production') {
+        throw new Error(`PDFShift failed: ${error.message}. Please check your PDFSHIFT_API_KEY.`);
+      }
       throw error;
     }
   }
@@ -119,9 +126,13 @@ export async function generatePDFFromHTML(options: PDFGenerationOptions): Promis
     }
   }
 
-  // Fallback: Try local Puppeteer (for development only)
-  if (process.env.NODE_ENV === 'development') {
+  // Fallback: Try local Puppeteer (ONLY in local development, NEVER in production/serverless)
+  const isProduction = process.env.VERCEL || process.env.NODE_ENV === 'production';
+  const isLocalDev = !isProduction && process.env.NODE_ENV === 'development';
+  
+  if (isLocalDev) {
     try {
+      console.log('[PDF Service] Attempting local Puppeteer fallback (development only)');
       const { getPuppeteerBrowser } = await import('@/lib/utils/puppeteer');
       const browser = await getPuppeteerBrowser();
       const page = await browser.newPage();
@@ -140,7 +151,15 @@ export async function generatePDFFromHTML(options: PDFGenerationOptions): Promis
       return Buffer.from(pdfUint8Array);
     } catch (error: any) {
       console.error('[PDF Service] Local Puppeteer failed:', error.message);
+      throw new Error(`Local Puppeteer failed: ${error.message}. Please configure PDFSHIFT_API_KEY for production.`);
     }
+  }
+
+  // In production/serverless, we must have PDFShift or Browserless configured
+  if (isProduction) {
+    throw new Error(
+      'PDF generation failed in production. Please configure PDFSHIFT_API_KEY (or BROWSERLESS_API_KEY) in Vercel environment variables. Puppeteer is not supported in serverless environments.'
+    );
   }
 
   throw new Error(

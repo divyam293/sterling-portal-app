@@ -68,7 +68,8 @@ export async function generatePDFFromHTML(options: PDFGenerationOptions): Promis
           source: html,
           format: format.toLowerCase(),
           margin: marginValue,
-          print_background: printBackground,
+          // Note: PDFShift doesn't support print_background parameter
+          // Backgrounds are printed by default in PDFShift
         }),
       });
 

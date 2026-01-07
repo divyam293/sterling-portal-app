@@ -1,41 +1,20 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  reactStrictMode: true,
-  images: {
-    domains: [],
-  },
-  // Optimize for faster development
-  swcMinify: true,
-  compiler: {
-    removeConsole: false,
-  },
-  // Enable standalone output for Docker deployment
-  output: 'standalone',
-  // Reduce file system operations
-  onDemandEntries: {
-    // Keep pages in memory longer
-    maxInactiveAge: 60 * 1000,
-    // Reduce number of pages that can be kept in memory
-    pagesBufferLength: 5,
-  },
-  // Use memory-based cache for development to avoid OneDrive file locking issues
-  webpack: (config, { dev, isServer }) => {
-    if (dev && !isServer) {
-      // Use memory filesystem for webpack cache in development
-      config.cache = {
-        type: 'memory',
-      };
+  // Exclude puppeteer from server-side bundle (use puppeteer-core instead)
+  webpack: (config, { isServer }) => {
+    if (isServer) {
+      // Exclude regular puppeteer from server bundle
+      config.externals = config.externals || [];
+      config.externals.push({
+        'puppeteer': 'commonjs puppeteer',
+      });
     }
     return config;
+  },
+  // Increase function timeout for PDF generation
+  experimental: {
+    serverComponentsExternalPackages: ['puppeteer-core', '@sparticuz/chromium'],
   },
 };
 
 module.exports = nextConfig;
-
-
-
-
-
-
-
-

@@ -1,237 +1,134 @@
-import { ProposalPDF } from "./ProposalPDF";
-import { FinanceAgreementPDF } from "./FinanceAgreementPDF";
-import { CarrierFormsPDF } from "./CarrierFormsPDF";
-import Submission from "@/models/Submission";
-import Quote from "@/models/Quote";
-import FinancePlan from "@/models/FinancePlan";
+/**
+ * Production-ready PDF generation service
+ * Uses external service for HTML-to-PDF conversion
+ */
 
-export type DocumentType = "PROPOSAL" | "FINANCE_AGREEMENT" | "CARRIER_FORM";
-
-interface IGenerateDocumentParams {
-  quoteId: string;
-  documentType: DocumentType;
+interface PDFGenerationOptions {
+  html: string;
+  format?: 'A4' | 'Letter';
+  margin?: {
+    top?: string;
+    right?: string;
+    bottom?: string;
+    left?: string;
+  };
+  printBackground?: boolean;
 }
 
-interface IGenerateDocumentResult {
-  success: boolean;
-  documentUrl: string;
-  documentName: string;
-  error?: string;
-}
+/**
+ * Generate PDF using PDFShift (Primary - Cost-effective)
+ * Fallback: Browserless.io or local Puppeteer for development
+ */
+export async function generatePDFFromHTML(options: PDFGenerationOptions): Promise<Buffer> {
+  const { html, format = 'A4', margin, printBackground = true } = options;
 
-export class PDFService {
-  /**
-   * Generate a document for a quote
-   */
-  static async generateDocument(
-    params: IGenerateDocumentParams
-  ): Promise<IGenerateDocumentResult> {
+  // Option 1: PDFShift (Primary - Cost-effective)
+  // Get API key from: https://pdfshift.io/
+  const PDFSHIFT_API_KEY = process.env.PDFSHIFT_API_KEY;
+  if (PDFSHIFT_API_KEY) {
     try {
-      console.log("📋 [PDF SERVICE] PDF GENERATION STARTED");
-      console.log(`📋 [PDF SERVICE] Document Type: ${params.documentType}`);
-      console.log(`📋 [PDF SERVICE] Quote ID: ${params.quoteId}`);
-
-      // Get quote with all related data
-      const quote = await Quote.findById(params.quoteId)
-        .populate("submissionId")
-        .populate("carrierId")
-        .lean();
-
-      if (!quote) {
-        console.error("📋 [PDF SERVICE] ❌ Quote not found");
-        return {
-          success: false,
-          documentUrl: "",
-          documentName: "",
-          error: "Quote not found",
-        };
-      }
-
-      console.log("📋 [PDF SERVICE] ✅ Quote found");
-
-      const submission = quote.submissionId as any;
-      const carrier = quote.carrierId as any;
-
-      console.log(`📋 [PDF SERVICE] Submission ID: ${submission._id}`);
-      console.log(`📋 [PDF SERVICE] Carrier ID: ${carrier?._id || "N/A"}`);
-
-      // Get agency data
-      await import("@/models/Agency");
-      const Agency = (await import("@/models/Agency")).default;
-      const agency = await Agency.findById(submission.agencyId).lean();
-
-      if (!agency) {
-        console.error("📋 [PDF SERVICE] ❌ Agency not found");
-        return {
-          success: false,
-          documentUrl: "",
-          documentName: "",
-          error: "Agency not found",
-        };
-      }
-
-      console.log(`📋 [PDF SERVICE] ✅ Agency found: ${agency.name}`);
-
-      let result: { url: string; buffer: Buffer };
-      let documentType: DocumentType;
-      let documentName: string;
-
-      // Generate appropriate document
-      console.log(`📋 [PDF SERVICE] Generating ${params.documentType} PDF...`);
-      switch (params.documentType) {
-        case "PROPOSAL":
-          console.log("📋 [PDF SERVICE] Calling ProposalPDF.generate()...");
-          result = await ProposalPDF.generate(
-            submission,
-            quote.toObject ? quote.toObject() : quote,
-            agency,
-            carrier
-          );
-          documentType = "PROPOSAL";
-          documentName = `Proposal_${submission._id}.pdf`;
-          console.log("📋 [PDF SERVICE] ✅ Proposal PDF generated");
-          console.log(`📋 [PDF SERVICE] Result URL: ${result.url}`);
-          console.log(`📋 [PDF SERVICE] Buffer size: ${result.buffer.length} bytes`);
-          break;
-
-        case "FINANCE_AGREEMENT":
-          // Check if finance plan exists
-          const financePlan = await FinancePlan.findOne({
-            quoteId: params.quoteId,
-          }).lean();
-
-          if (!financePlan) {
-            return {
-              success: false,
-              documentUrl: "",
-              documentName: "",
-              error: "Finance plan not found. Please set up financing first.",
-            };
-          }
-
-          result = await FinanceAgreementPDF.generate(
-            submission,
-            quote.toObject ? quote.toObject() : quote,
-            financePlan.toObject ? financePlan.toObject() : financePlan
-          );
-          documentType = "FINANCE_AGREEMENT";
-          documentName = `Finance_Agreement_${submission._id}.pdf`;
-          break;
-
-        case "CARRIER_FORM":
-          console.log("📋 [PDF SERVICE] Calling CarrierFormsPDF.generate()...");
-          result = await CarrierFormsPDF.generate(submission, carrier);
-          documentType = "CARRIER_FORM";
-          documentName = `Carrier_Forms_${submission._id}.pdf`;
-          console.log("📋 [PDF SERVICE] ✅ Carrier Forms PDF generated");
-          console.log(`📋 [PDF SERVICE] Result URL: ${result.url}`);
-          console.log(`📋 [PDF SERVICE] Buffer size: ${result.buffer.length} bytes`);
-          break;
-
-        default:
-          return {
-            success: false,
-            documentUrl: "",
-            documentName: "",
-            error: "Invalid document type",
-          };
-      }
-
-      // Update submission with document info
-      console.log("📋 [PDF SERVICE] Updating submission with document metadata...");
-      const submissionDoc = await Submission.findById(submission._id);
-      if (!submissionDoc) {
-        console.error("📋 [PDF SERVICE] ❌ Submission document not found");
-        return {
-          success: false,
-          documentUrl: "",
-          documentName: "",
-          error: "Submission not found",
-        };
-      }
-
-      console.log(`📋 [PDF SERVICE] Submission found: ${submissionDoc._id}`);
-      console.log(`📋 [PDF SERVICE] Current signedDocuments count: ${submissionDoc.signedDocuments?.length || 0}`);
-
-      // Initialize signedDocuments array if it doesn't exist
-      if (!submissionDoc.signedDocuments) {
-        console.log("📋 [PDF SERVICE] Initializing signedDocuments array...");
-        submissionDoc.signedDocuments = [];
-      }
-
-      // Create document metadata
-      const documentMetadata = {
-        documentType,
-        documentName,
-        documentUrl: result.url,
-        generatedAt: new Date(),
-        signatureStatus: "GENERATED" as const,
-      };
-
-      console.log("📋 [PDF SERVICE] Document metadata:", {
-        documentType: documentMetadata.documentType,
-        documentName: documentMetadata.documentName,
-        documentUrl: documentMetadata.documentUrl,
-        signatureStatus: documentMetadata.signatureStatus,
+      console.log('[PDF Service] Using PDFShift for PDF generation');
+      
+      // Convert margin object to string format for PDFShift
+      const marginValue = margin 
+        ? typeof margin === 'string' 
+          ? margin 
+          : `${margin.top || '20px'} ${margin.right || '20px'} ${margin.bottom || '20px'} ${margin.left || '20px'}`
+        : '20px';
+      
+      const response = await fetch('https://api.pdfshift.io/v3/convert/pdf', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-API-Key': PDFSHIFT_API_KEY,
+        },
+        body: JSON.stringify({
+          source: html,
+          format: format.toLowerCase(),
+          margin: marginValue,
+          print_background: printBackground,
+        }),
       });
 
-      // Add document to signedDocuments array
-      submissionDoc.signedDocuments.push(documentMetadata);
-
-      console.log(`📋 [PDF SERVICE] Saving submission with ${submissionDoc.signedDocuments.length} documents...`);
-      await submissionDoc.save();
-
-      // Verify the save
-      const verifySubmission = await Submission.findById(submission._id).select("signedDocuments").lean();
-      console.log(`📋 [PDF SERVICE] ✅ Submission saved`);
-      console.log(`📋 [PDF SERVICE] SIGNED DOCUMENTS COUNT: ${verifySubmission?.signedDocuments?.length || 0}`);
-      if (verifySubmission?.signedDocuments) {
-        verifySubmission.signedDocuments.forEach((doc: any, idx: number) => {
-          console.log(`📋 [PDF SERVICE]   Document ${idx + 1}: ${doc.documentType} - ${doc.documentName} - ${doc.signatureStatus}`);
-        });
+      if (!response.ok) {
+        throw new Error(`PDFShift API error: ${response.statusText}`);
       }
 
-      console.log(`📋 [PDF SERVICE] ✅ Document generated successfully: ${documentType} for quote ${params.quoteId}`);
-      console.log(`📋 [PDF SERVICE] FINAL DOCUMENT URL: ${result.url}`);
-
-      return {
-        success: true,
-        documentUrl: result.url,
-        documentName,
-      };
+      const pdfBuffer = Buffer.from(await response.arrayBuffer());
+      return pdfBuffer;
     } catch (error: any) {
-      console.error("📋 [PDF SERVICE] ❌ PDF generation error:", error);
-      console.error("📋 [PDF SERVICE] Error stack:", error.stack);
-      return {
-        success: false,
-        documentUrl: "",
-        documentName: "",
-        error: error.message || "Failed to generate document",
-      };
+      console.error('[PDF Service] PDFShift failed:', error.message);
+      throw error;
     }
   }
 
-  /**
-   * Get all documents for a quote
-   */
-  static async getDocuments(quoteId: string) {
+  // Option 2: Browserless.io (Fallback)
+  // Get API key from: https://www.browserless.io/
+  const BROWSERLESS_API_KEY = process.env.BROWSERLESS_API_KEY;
+  const BROWSERLESS_URL = process.env.BROWSERLESS_URL || 'https://chrome.browserless.io/pdf';
+
+  if (BROWSERLESS_API_KEY) {
     try {
-      const quote = await Quote.findById(quoteId)
-        .populate("submissionId")
-        .lean();
+      const response = await fetch(BROWSERLESS_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${BROWSERLESS_API_KEY}`,
+        },
+        body: JSON.stringify({
+          html,
+          options: {
+            format,
+            margin: margin || { top: '20px', right: '20px', bottom: '20px', left: '20px' },
+            printBackground,
+          },
+        }),
+      });
 
-      if (!quote) {
-        return [];
+      if (!response.ok) {
+        throw new Error(`Browserless API error: ${response.statusText}`);
       }
 
-      const submission = quote.submissionId as any;
-      return submission.signedDocuments || [];
+      const pdfBuffer = Buffer.from(await response.arrayBuffer());
+      return pdfBuffer;
     } catch (error: any) {
-      console.error("Get documents error:", error);
-      return [];
+      console.error('[PDF Service] Browserless failed:', error.message);
+      throw error;
     }
   }
+
+  // Fallback: Try local Puppeteer (for development only)
+  if (process.env.NODE_ENV === 'development') {
+    try {
+      const { getPuppeteerBrowser } = await import('@/lib/utils/puppeteer');
+      const browser = await getPuppeteerBrowser();
+      const page = await browser.newPage();
+      await page.setContent(html, { waitUntil: 'networkidle0' });
+      const pdfUint8Array = await page.pdf({
+        format,
+        printBackground,
+        margin: margin || {
+          top: '20px',
+          right: '20px',
+          bottom: '20px',
+          left: '20px',
+        },
+      });
+      await browser.close();
+      return Buffer.from(pdfUint8Array);
+    } catch (error: any) {
+      console.error('[PDF Service] Local Puppeteer failed:', error.message);
+    }
+  }
+
+  throw new Error(
+    'PDF generation failed. Please configure PDFSHIFT_API_KEY (or BROWSERLESS_API_KEY) in environment variables.'
+  );
 }
 
-export default PDFService;
-
+/**
+ * Check if PDF service is configured
+ */
+export function isPDFServiceConfigured(): boolean {
+  return !!(process.env.BROWSERLESS_API_KEY || process.env.PDFSHIFT_API_KEY);
+}

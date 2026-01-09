@@ -85,15 +85,17 @@ export async function generatePDFFromHTML(options: PDFGenerationOptions): Promis
   // Get API key from: https://pdfshift.io/
   const PDFSHIFT_API_KEY = process.env.PDFSHIFT_API_KEY;
   if (PDFSHIFT_API_KEY) {
+    // Declare minifiedHTML outside try block so it's accessible in catch
+    let minifiedHTML: string = html;
+    
     try {
       console.log('[PDF Service] Using PDFShift for PDF generation');
       
       // Minify HTML to reduce size (important for PDFShift 2MB limit)
-      let minifiedHTML: string;
       try {
         minifiedHTML = minifyHTML(html);
-      } catch (error: any) {
-        console.error('[PDF Service] Error minifying HTML, using original:', error.message);
+      } catch (minifyError: any) {
+        console.error('[PDF Service] Error minifying HTML, using original:', minifyError.message);
         minifiedHTML = html;
       }
       
@@ -154,7 +156,7 @@ export async function generatePDFFromHTML(options: PDFGenerationOptions): Promis
                          error.message.includes('2MB') ||
                          error.message.includes('Document size too big');
       
-      // Log HTML size for debugging
+      // Log HTML size for debugging (minifiedHTML is now accessible)
       const htmlSizeKB = Buffer.byteLength(minifiedHTML, 'utf8') / 1024;
       console.error(`[PDF Service] HTML size was: ${htmlSizeKB.toFixed(2)} KB`);
       

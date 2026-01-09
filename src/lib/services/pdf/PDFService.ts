@@ -168,10 +168,13 @@ export async function generatePDFFromHTML(options: PDFGenerationOptions): Promis
       const htmlSizeKB = Buffer.byteLength(minifiedHTML, 'utf8') / 1024;
       console.error(`[PDF Service] HTML size was: ${htmlSizeKB.toFixed(2)} KB`);
       
-      // Check if it's a size limit error - be more specific to avoid false positives
-      const isSizeError = (error.message.includes('Document size too big') || 
-                          error.message.includes('too big') && error.message.includes('2Mb')) &&
-                          htmlSizeKB > 1500; // Only consider it a size error if HTML is actually large
+      // Check if it's a size limit error - ONLY if HTML is actually large (>1500 KB)
+      // This prevents false positives when PDFShift returns other errors
+      const isSizeError = htmlSizeKB > 1500 && (
+        error.message.includes('Document size too big') || 
+        (error.message.includes('too big') && error.message.includes('2MB')) ||
+        (error.message.includes('too big') && error.message.includes('2Mb'))
+      );
       
       // In production, if it's a size error, provide helpful message
       if (isSizeError) {

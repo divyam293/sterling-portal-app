@@ -4,7 +4,7 @@ import { authOptions } from "@/lib/authOptions";
 import connectDB from "@/lib/mongodb";
 import Submission from "@/models/Submission";
 import Agency from "@/models/Agency";
-import { generateApplicationHTML } from "@/lib/services/pdf/ApplicationPDF";
+import { generateApplicationPacketHTML, mapFormDataToPacketData } from "@/lib/services/pdf/ApplicationPacketPDF";
 import { savePDFToStorage } from "@/lib/services/pdf/storage";
 
 /**
@@ -87,15 +87,17 @@ export async function POST(req: NextRequest) {
     try {
       console.log("📄 Starting PDF generation...");
       
-      const applicationData = {
-        ...formData,
-        submittedDate: new Date().toLocaleDateString(),
-        agencyName: agency.name || "Unknown Agency",
-        programName: programName || "Advantage Contractor GL",
-      };
+      // Map form data to packet data format (no quote yet for new submissions)
+      const packetData = mapFormDataToPacketData(
+        formData,
+        submission._id.toString(),
+        agency,
+        undefined, // No quote yet for new submissions
+        submission
+      );
 
-      console.log("📄 Generating HTML content...");
-      const htmlContent = generateApplicationHTML(applicationData);
+      console.log("📄 Generating 12-page application packet HTML...");
+      const htmlContent = generateApplicationPacketHTML(packetData);
       console.log(`📄 HTML content length: ${htmlContent.length} characters`);
 
       // Generate PDF using production service (PDFShift)

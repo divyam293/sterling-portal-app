@@ -4,7 +4,8 @@ import { authOptions } from "@/lib/authOptions";
 import connectDB from "@/lib/mongodb";
 import Submission from "@/models/Submission";
 import Agency from "@/models/Agency";
-import { generateApplicationHTML } from "@/lib/services/pdf/ApplicationPDF";
+import Quote from "@/models/Quote";
+import { generateApplicationPacketHTML, mapFormDataToPacketData } from "@/lib/services/pdf/ApplicationPacketPDF";
 
 /**
  * GET /api/admin/submissions/[id]/pdf
@@ -49,17 +50,21 @@ export async function GET(
     // Get agency details
     const agency = await Agency.findById(submission.agencyId);
 
-    // Prepare application data
-    const formData = submission.payload || {};
-    const applicationData = {
-      ...formData,
-      submittedDate: submission.createdAt.toLocaleDateString(),
-      agencyName: agency?.name || "Unknown Agency",
-      programName: (submission as any).programName || "Advantage Contractor GL",
-    } as any;
+    // Get quote if available (for invoice page)
+    const quote = await Quote.findOne({ submissionId: submission._id });
 
-    // Generate HTML
-    const htmlContent = generateApplicationHTML(applicationData);
+    // Map form data to packet data format
+    const formData = submission.payload || {};
+    const packetData = mapFormDataToPacketData(
+      formData,
+      submission._id.toString(),
+      agency,
+      quote ? quote.toObject() : undefined,
+      submission
+    );
+
+    // Generate 12-page application packet HTML
+    const htmlContent = generateApplicationPacketHTML(packetData);
 
     // Generate PDF using production service (PDFShift)
     const { generatePDFFromHTML } = await import('@/lib/services/pdf/PDFService');

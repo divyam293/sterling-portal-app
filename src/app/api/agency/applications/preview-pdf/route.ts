@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/authOptions";
 import connectDB from "@/lib/mongodb";
 import Agency from "@/models/Agency";
-import { generateApplicationHTML } from "@/lib/services/pdf/ApplicationPDF";
+import { generateApplicationPacketHTML, mapFormDataToPacketData } from "@/lib/services/pdf/ApplicationPacketPDF";
 
 /**
  * POST /api/agency/applications/preview-pdf
@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
     }
 
     const user = session.user as any;
-    const { programId, programName, formData } = await req.json();
+    const { programId, programName, formData, agencyInfo } = await req.json();
 
     if (!formData) {
       return NextResponse.json(
@@ -27,21 +27,56 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    await connectDB();
+    // Try to get agency details from MongoDB, but use defaults if connection fails
+    let agency: any = null;
+    try {
+      await connectDB();
+      agency = await Agency.findById(user.agencyId);
+    } catch (dbError: any) {
+      console.warn("MongoDB connection failed for preview, using default agency info:", dbError.message);
+      // Use default agency info or info from request
+      agency = agencyInfo || {
+        name: "Gamaty Insurance Agency LLC DBA Capital & Co Insurance Services",
+        email: "eidan@capcoinsurance.com",
+        phone: "(310) 284-2136",
+        address: {
+          street: "5455 Wilshire Blvd. Suite 1816",
+          city: "Los Angeles",
+          state: "CA",
+          zip: "90036",
+        },
+      };
+    }
 
-    // Get agency details
-    const agency = await Agency.findById(user.agencyId);
+    // If agency is still null, use defaults
+    if (!agency) {
+      agency = {
+        name: "Gamaty Insurance Agency LLC DBA Capital & Co Insurance Services",
+        email: "eidan@capcoinsurance.com",
+        phone: "(310) 284-2136",
+        address: {
+          street: "5455 Wilshire Blvd. Suite 1816",
+          city: "Los Angeles",
+          state: "CA",
+          zip: "90036",
+        },
+      };
+    }
 
-    // Prepare application data
-    const applicationData = {
-      ...formData,
-      submittedDate: new Date().toLocaleDateString(),
-      agencyName: agency?.name || "Unknown Agency",
-      programName: programName || "Advantage Contractor GL",
-    };
+    // Create a temporary submission ID for preview
+    const tempSubmissionId = `preview-${Date.now()}`;
 
-    // Generate HTML
-    const htmlContent = generateApplicationHTML(applicationData);
+    // Map form data to packet data format
+    const packetData = mapFormDataToPacketData(
+      formData,
+      tempSubmissionId,
+      agency,
+      undefined, // No quote for preview
+      { programName: programName || "Advantage Contractor GL" } as any
+    );
+
+    // Generate 12-page application packet HTML
+    const htmlContent = generateApplicationPacketHTML(packetData);
 
     // Generate PDF using production service (PDFShift)
     const { generatePDFFromHTML } = await import('@/lib/services/pdf/PDFService');

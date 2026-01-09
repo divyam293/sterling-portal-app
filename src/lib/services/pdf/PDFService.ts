@@ -37,11 +37,49 @@ interface GenerateDocumentResult {
 }
 
 /**
+ * Minify HTML to reduce size for PDFShift
+ */
+function minifyHTML(html: string): string {
+  return html
+    // Remove comments
+    .replace(/<!--[\s\S]*?-->/g, '')
+    // Remove extra whitespace
+    .replace(/\s+/g, ' ')
+    // Remove whitespace between tags
+    .replace(/>\s+</g, '><')
+    // Remove leading/trailing whitespace
+    .trim();
+}
+
+/**
+ * Optimize CSS by removing unnecessary whitespace and comments
+ */
+function optimizeCSS(css: string): string {
+  return css
+    // Remove CSS comments
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    // Remove extra whitespace
+    .replace(/\s+/g, ' ')
+    // Remove whitespace around colons, semicolons, braces
+    .replace(/\s*{\s*/g, '{')
+    .replace(/\s*}\s*/g, '}')
+    .replace(/\s*:\s*/g, ':')
+    .replace(/\s*;\s*/g, ';')
+    .replace(/\s*,\s*/g, ',')
+    // Remove trailing semicolons before closing braces
+    .replace(/;}/g, '}')
+    .trim();
+}
+
+/**
  * Generate PDF using PDFShift (Primary - Cost-effective)
  * Fallback: Browserless.io or local Puppeteer for development
  */
 export async function generatePDFFromHTML(options: PDFGenerationOptions): Promise<Buffer> {
   const { html, format = 'A4', margin, printBackground = true } = options;
+  
+  // Store original HTML for Puppeteer fallback (Puppeteer works better with unminified HTML)
+  const originalHTML = html;
 
   // Option 1: PDFShift (Primary - Cost-effective)
   // Get API key from: https://pdfshift.io/
@@ -49,6 +87,26 @@ export async function generatePDFFromHTML(options: PDFGenerationOptions): Promis
   if (PDFSHIFT_API_KEY) {
     try {
       console.log('[PDF Service] Using PDFShift for PDF generation');
+      
+      // Minify HTML to reduce size (important for PDFShift 2MB limit)
+      let minifiedHTML: string;
+      try {
+        minifiedHTML = minifyHTML(html);
+      } catch (error: any) {
+        console.error('[PDF Service] Error minifying HTML, using original:', error.message);
+        minifiedHTML = html;
+      }
+      
+      const htmlSizeKB = Buffer.byteLength(minifiedHTML, 'utf8') / 1024;
+      console.log(`[PDF Service] HTML size: ${htmlSizeKB.toFixed(2)} KB`);
+      
+      if (htmlSizeKB > 2000) {
+        console.warn(`[PDF Service] Warning: HTML size (${htmlSizeKB.toFixed(2)} KB) exceeds PDFShift free tier limit (2MB). Consider optimizing.`);
+      }
+      
+      if (!minifiedHTML || minifiedHTML.length === 0) {
+        throw new Error('Generated HTML is empty');
+      }
       
       // Convert margin object to string format for PDFShift
       const marginValue = margin 
@@ -65,7 +123,7 @@ export async function generatePDFFromHTML(options: PDFGenerationOptions): Promis
           'X-API-Key': PDFSHIFT_API_KEY,
         },
         body: JSON.stringify({
-          source: html,
+          source: minifiedHTML,
           format: format.toLowerCase(),
           margin: marginValue,
           // Note: PDFShift doesn't support print_background parameter
@@ -84,11 +142,22 @@ export async function generatePDFFromHTML(options: PDFGenerationOptions): Promis
       return pdfBuffer;
     } catch (error: any) {
       console.error('[PDF Service] PDFShift failed:', error.message);
-      // Don't fall through to Puppeteer in production - throw the error
-      if (process.env.VERCEL || process.env.NODE_ENV === 'production') {
+      
+      // Check if it's a size limit error
+      const isSizeError = error.message.includes('too big') || error.message.includes('2Mb') || error.message.includes('2MB');
+      
+      // In production, throw the error (unless it's a size error, then try fallback)
+      if ((process.env.VERCEL || process.env.NODE_ENV === 'production') && !isSizeError) {
         throw new Error(`PDFShift failed: ${error.message}. Please check your PDFSHIFT_API_KEY.`);
       }
-      throw error;
+      
+      // For size errors or in development, fall through to Puppeteer/Browserless
+      if (isSizeError) {
+        console.warn('[PDF Service] PDFShift size limit exceeded (likely due to external QR code images), falling back to Puppeteer...');
+        // Continue to fallback handlers below
+      } else {
+        throw error; // Re-throw non-size errors
+      }
     }
   }
 
@@ -137,7 +206,7 @@ export async function generatePDFFromHTML(options: PDFGenerationOptions): Promis
       const { getPuppeteerBrowser } = await import('@/lib/utils/puppeteer');
       const browser = await getPuppeteerBrowser();
       const page = await browser.newPage();
-      await page.setContent(html, { waitUntil: 'networkidle0' });
+      await page.setContent(originalHTML, { waitUntil: 'networkidle0' });
       const pdfUint8Array = await page.pdf({
         format,
         printBackground,

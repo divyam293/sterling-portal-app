@@ -4,7 +4,8 @@ import { authOptions } from "@/lib/authOptions";
 import connectDB from "@/lib/mongodb";
 import Submission from "@/models/Submission";
 import Agency from "@/models/Agency";
-import { generateApplicationHTML } from "@/lib/services/pdf/ApplicationPDF";
+import Quote from "@/models/Quote";
+import { generateApplicationPacketHTML, mapFormDataToPacketData } from "@/lib/services/pdf/ApplicationPacketPDF";
 
 /**
  * GET /api/agency/applications/[id]/pdf
@@ -24,7 +25,15 @@ export async function GET(
     const user = session.user as any;
     const applicationId = params.id;
 
-    await connectDB();
+    try {
+      await connectDB();
+    } catch (dbError: any) {
+      console.error("MongoDB connection error:", dbError.message);
+      return NextResponse.json(
+        { error: "Database connection failed. Please try again." },
+        { status: 503 }
+      );
+    }
 
     // Get application
     const submission = await Submission.findOne({
@@ -40,19 +49,49 @@ export async function GET(
     }
 
     // Get agency details
-    const agency = await Agency.findById(user.agencyId);
+    let agency: any = null;
+    try {
+      agency = await Agency.findById(user.agencyId);
+    } catch (error: any) {
+      console.error("Error fetching agency:", error.message);
+      // Use default agency info as fallback
+      agency = {
+        name: "Gamaty Insurance Agency LLC DBA Capital & Co Insurance Services",
+        email: "eidan@capcoinsurance.com",
+        phone: "(310) 284-2136",
+        address: {
+          street: "5455 Wilshire Blvd. Suite 1816",
+          city: "Los Angeles",
+          state: "CA",
+          zip: "90036",
+        },
+      };
+    }
 
-    // Prepare application data
+    // Get quote if available (for invoice page)
+    let quote: any = null;
+    try {
+      quote = await Quote.findOne({ submissionId: submission._id });
+      if (quote) {
+        quote = quote.toObject();
+      }
+    } catch (error: any) {
+      console.warn("Error fetching quote (optional):", error.message);
+      // Quote is optional, continue without it
+    }
+
+    // Map form data to packet data format
     const formData = submission.payload || {};
-    const applicationData = {
-      ...formData,
-      submittedDate: submission.createdAt.toLocaleDateString(),
-      agencyName: agency?.name || "Unknown Agency",
-      programName: submission.programName || "Advantage Contractor GL",
-    } as any;
+    const packetData = mapFormDataToPacketData(
+      formData,
+      submission._id.toString(),
+      agency,
+      quote,
+      submission
+    );
 
-    // Generate HTML
-    const htmlContent = generateApplicationHTML(applicationData);
+    // Generate 12-page application packet HTML
+    const htmlContent = generateApplicationPacketHTML(packetData);
 
     // Generate PDF using production service (PDFShift)
     const { generatePDFFromHTML } = await import('@/lib/services/pdf/PDFService');

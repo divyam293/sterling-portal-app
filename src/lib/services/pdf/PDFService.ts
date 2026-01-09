@@ -242,7 +242,7 @@ export async function generatePDFFromHTML(options: PDFGenerationOptions): Promis
   }
 
   // If we reach here, no PDF service is configured or all services failed
-  const isProduction = process.env.VERCEL || process.env.NODE_ENV === 'production';
+  // (isProduction is already defined above)
   
   if (isProduction) {
     console.error('[PDF Service] All PDF generation methods failed in production');

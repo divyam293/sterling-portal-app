@@ -180,10 +180,7 @@ export async function generatePDFFromHTML(options: PDFGenerationOptions): Promis
                           error.message.includes('2Mb') || 
                           error.message.includes('2MB') ||
                           error.message.includes('more than 2Mb') ||
-                          error.message.includes('more than 2MB') ||
-                          (errorData.errors && errorData.errors.source && 
-                           errorData.errors.source.some((msg: string) => 
-                             msg.includes('more than 2Mb') || msg.includes('more than 2MB')));
+                          error.message.includes('more than 2MB');
       
       // In development, always fall back to Puppeteer for size errors
       const isDevelopment = !process.env.VERCEL && process.env.NODE_ENV === 'development';

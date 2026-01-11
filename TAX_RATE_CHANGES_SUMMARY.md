@@ -134,3 +134,4 @@ These rates are automatically used in:
 - Default rate is 2.0% if state is not found
 - Last updated: January 2025
 
+

@@ -1859,8 +1859,8 @@ export async function generateApplicationPacketHTML(data: ApplicationPacketData)
     }
     
     body {
-      font-family: var(--font-family);
-      font-size: var(--font-size-base);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif;
+      font-size: 12pt;
       font-weight: 400; /* Inter Regular */
       line-height: 1.6;
       color: #1f2937 !important; /* Explicit black/dark gray for CustomJS compatibility */
@@ -1894,13 +1894,13 @@ export async function generateApplicationPacketHTML(data: ApplicationPacketData)
     
     .sidebar {
       width: 1.25in;
-      background: linear-gradient(180deg, var(--bg-light) 0%, var(--bg-white) 100%);
+      background: linear-gradient(180deg, #f9fafb 0%, #ffffff 100%);
       padding: 0.4in 0.25in;
       display: flex;
       flex-direction: column;
       align-items: center;
       position: relative;
-      border-right: 2px solid var(--border-light);
+      border-right: 2px solid #e5e7eb;
       box-shadow: inset -2px 0 4px rgba(0, 0, 0, 0.02);
       z-index: 1;
     }
@@ -1912,15 +1912,15 @@ export async function generateApplicationPacketHTML(data: ApplicationPacketData)
     .logo {
       width: 0.65in;
       height: 0.65in;
-      background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
-      color: var(--text-inverse);
+      background: linear-gradient(135deg, #4A9EFF 0%, #3a7fd4 100%);
+      color: #ffffff;
       border-radius: 12px;
       display: flex;
       align-items: center;
       justify-content: center;
       font-weight: 700;
       font-size: 20pt;
-      box-shadow: var(--shadow-premium), 0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.03), 0 0 0 1px rgba(255, 255, 255, 0.1) inset;
       border: 2px solid rgba(255, 255, 255, 0.3);
       position: relative;
     }
@@ -1969,11 +1969,11 @@ export async function generateApplicationPacketHTML(data: ApplicationPacketData)
     }
     
     .qr-code {
-      background: var(--bg-white);
+      background: #ffffff;
       padding: 0.1in;
       border-radius: 10px;
-      box-shadow: var(--shadow-premium);
-      border: 2px solid var(--border-light);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.03);
+      border: 2px solid #e5e7eb;
       position: relative;
       overflow: hidden;
     }
@@ -2001,12 +2001,12 @@ export async function generateApplicationPacketHTML(data: ApplicationPacketData)
       display: flex;
       align-items: center;
       justify-content: center;
-      background: var(--bg-white);
-      border: 2px solid var(--primary-color);
+      background: #ffffff;
+      border: 2px solid #4A9EFF;
       border-radius: 8px;
       font-size: var(--font-size-xs);
       font-weight: 700;
-      color: var(--primary-color);
+      color: #4A9EFF;
       text-align: center;
       padding: 0.05in;
       word-break: break-all;
@@ -2030,7 +2030,7 @@ export async function generateApplicationPacketHTML(data: ApplicationPacketData)
     .applicant-icon {
       font-size: 20pt;
       margin-top: var(--spacing-xs);
-      color: var(--primary-color);
+      color: #4A9EFF;
       background: linear-gradient(135deg, rgba(74, 158, 255, 0.1) 0%, rgba(74, 158, 255, 0.05) 100%);
       width: 0.5in;
       height: 0.5in;
@@ -2039,20 +2039,20 @@ export async function generateApplicationPacketHTML(data: ApplicationPacketData)
       align-items: center;
       justify-content: center;
       box-shadow: var(--shadow-sm);
-      border: 2px solid var(--primary-color);
+      border: 2px solid #4A9EFF;
     }
     
     .applicant-label {
       font-size: var(--font-size-xs);
-      color: var(--text-secondary);
+      color: #6b7280;
       margin-top: var(--spacing-xs);
       font-weight: 600;
       text-transform: uppercase;
       letter-spacing: 0.8px;
       padding: 0.03in 0.1in;
-      background: var(--bg-light);
+      background: #f9fafb;
       border-radius: 12px;
-      border: 1px solid var(--border-light);
+      border: 1px solid #e5e7eb;
     }
     
     .main-content {
@@ -2066,8 +2066,8 @@ export async function generateApplicationPacketHTML(data: ApplicationPacketData)
       margin-bottom: var(--spacing-lg);
       padding: var(--spacing-md);
       padding-bottom: var(--spacing-md);
-      border-bottom: 3px solid var(--primary-color);
-      background: linear-gradient(135deg, var(--bg-light) 0%, var(--bg-white) 100%);
+      border-bottom: 3px solid #4A9EFF;
+      background: linear-gradient(135deg, #f9fafb 0%, #ffffff 100%);
       border-radius: 8px;
       box-shadow: var(--shadow-sm);
     }
@@ -2076,7 +2076,7 @@ export async function generateApplicationPacketHTML(data: ApplicationPacketData)
       font-size: var(--font-size-lg);
       font-weight: 700;
       margin-bottom: var(--spacing-sm);
-      color: var(--text-primary);
+      color: #1f2937;
       letter-spacing: 0.5px;
       line-height: 1.5;
     }
@@ -2085,13 +2085,13 @@ export async function generateApplicationPacketHTML(data: ApplicationPacketData)
       font-size: var(--font-size-lg);
       font-weight: 700;
       margin-bottom: var(--spacing-xs);
-      color: var(--text-primary);
+      color: #1f2937;
       line-height: 1.5;
     }
     
     .application-id {
       font-size: var(--font-size-sm);
-      color: var(--text-secondary);
+      color: #6b7280;
       font-weight: 600;
       letter-spacing: 0.3px;
     }
@@ -2100,11 +2100,11 @@ export async function generateApplicationPacketHTML(data: ApplicationPacketData)
       margin: var(--spacing-md) 0;
       font-size: var(--font-size-base);
       line-height: 1.8;
-      color: var(--text-secondary);
+      color: #6b7280;
       padding: var(--spacing-md);
       background: linear-gradient(135deg, rgba(74, 158, 255, 0.05) 0%, transparent 100%);
       border-radius: 8px;
-      border-left: 4px solid var(--primary-color);
+      border-left: 4px solid #4A9EFF;
       box-shadow: var(--shadow-sm);
     }
     
@@ -2117,7 +2117,7 @@ export async function generateApplicationPacketHTML(data: ApplicationPacketData)
       content: 'ℹ';
       display: inline-block;
       margin-right: var(--spacing-xs);
-      color: var(--primary-color);
+      color: #4A9EFF;
       font-weight: 700;
       font-size: 12pt;
     }
@@ -2132,10 +2132,10 @@ export async function generateApplicationPacketHTML(data: ApplicationPacketData)
       padding: var(--spacing-sm) var(--spacing-md);
       padding-left: var(--spacing-lg);
       line-height: 1.8;
-      color: var(--text-primary);
-      background: linear-gradient(135deg, var(--bg-light) 0%, var(--bg-white) 100%);
+      color: #1f2937;
+      background: linear-gradient(135deg, #f9fafb 0%, #ffffff 100%);
       border-radius: 8px;
-      border-left: 4px solid var(--primary-color);
+      border-left: 4px solid #4A9EFF;
       box-shadow: var(--shadow-sm);
       position: relative;
       font-weight: 500;
@@ -2149,8 +2149,8 @@ export async function generateApplicationPacketHTML(data: ApplicationPacketData)
       transform: translateY(-50%);
       width: 0.2in;
       height: 0.2in;
-      background: var(--primary-color);
-      color: var(--text-inverse);
+      background: #4A9EFF;
+      color: #ffffff;
       border-radius: 50%;
       display: flex;
       align-items: center;
@@ -2161,7 +2161,7 @@ export async function generateApplicationPacketHTML(data: ApplicationPacketData)
     }
     
     .checklist-item:hover {
-      background: linear-gradient(135deg, var(--bg-medium) 0%, var(--bg-light) 100%);
+      background: linear-gradient(135deg, #f3f4f6 0%, #f9fafb 100%);
       transform: translateX(3px);
       box-shadow: var(--shadow-md);
     }
@@ -2170,21 +2170,21 @@ export async function generateApplicationPacketHTML(data: ApplicationPacketData)
     .binding-instructions {
       margin: var(--spacing-md) 0;
       font-size: var(--font-size-sm);
-      color: var(--text-secondary);
+      color: #6b7280;
       line-height: 1.8;
       padding: var(--spacing-sm) var(--spacing-md);
       background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
-      border-left: 4px solid var(--primary-color);
+      border-left: 4px solid #4A9EFF;
       border-radius: 8px;
       box-shadow: var(--shadow-sm);
-      border-top: 1px solid var(--border-light);
-      border-right: 1px solid var(--border-light);
-      border-bottom: 1px solid var(--border-light);
+      border-top: 1px solid #e5e7eb;
+      border-right: 1px solid #e5e7eb;
+      border-bottom: 1px solid #e5e7eb;
     }
     
     .submission-instructions strong,
     .binding-instructions strong {
-      color: var(--text-primary);
+      color: #1f2937;
       font-weight: 700;
     }
     
@@ -4508,11 +4508,11 @@ export async function generateApplicationPacketHTML(data: ApplicationPacketData)
       margin-bottom: var(--spacing-lg);
       padding: var(--spacing-md);
       padding-bottom: var(--spacing-md);
-      border-bottom: 3px solid var(--primary-color);
+      border-bottom: 3px solid #4A9EFF;
       align-items: flex-start;
-      background: linear-gradient(135deg, var(--bg-light) 0%, var(--bg-white) 100%);
+      background: linear-gradient(135deg, #f9fafb 0%, #ffffff 100%);
       border-radius: 8px 8px 0 0;
-      box-shadow: var(--shadow-premium);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.03);
       position: relative;
       overflow: hidden;
     }
@@ -4524,7 +4524,7 @@ export async function generateApplicationPacketHTML(data: ApplicationPacketData)
       left: 0;
       right: 0;
       height: 3px;
-      background: linear-gradient(90deg, var(--primary-color) 0%, var(--primary-light) 50%, var(--primary-color) 100%);
+      background: linear-gradient(90deg, #4A9EFF 0%, #6bb0ff 50%, #4A9EFF 100%);
     }
     
     .header-left,
@@ -4535,8 +4535,8 @@ export async function generateApplicationPacketHTML(data: ApplicationPacketData)
     .logo-small {
       width: 0.5in;
       height: 0.5in;
-      background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
-      color: var(--text-inverse);
+      background: linear-gradient(135deg, #4A9EFF 0%, #3a7fd4 100%);
+      color: #ffffff;
       border-radius: 10px;
       display: inline-flex;
       align-items: center;
@@ -4568,7 +4568,7 @@ export async function generateApplicationPacketHTML(data: ApplicationPacketData)
     .brand-name {
       font-size: var(--font-size-2xl);
       font-weight: 700;
-      color: var(--text-primary);
+      color: #1f2937;
       letter-spacing: -0.3px;
       margin-bottom: var(--spacing-xs);
       line-height: 1.3;
@@ -4576,7 +4576,7 @@ export async function generateApplicationPacketHTML(data: ApplicationPacketData)
     
     .brand-subtitle {
       font-size: var(--font-size-base);
-      color: var(--text-secondary);
+      color: #6b7280;
       font-weight: 500;
       letter-spacing: 0.8px;
       text-transform: uppercase;
@@ -4587,15 +4587,15 @@ export async function generateApplicationPacketHTML(data: ApplicationPacketData)
       font-size: var(--font-size-base);
       margin-bottom: var(--spacing-md);
       padding: var(--spacing-sm) var(--spacing-md);
-      background: linear-gradient(135deg, var(--bg-light) 0%, var(--bg-white) 100%);
-      border-left: 4px solid var(--primary-color);
+      background: linear-gradient(135deg, #f9fafb 0%, #ffffff 100%);
+      border-left: 4px solid #4A9EFF;
       border-radius: 8px;
       font-weight: 600;
-      color: var(--text-primary);
+      color: #1f2937;
       box-shadow: var(--shadow-sm);
-      border-top: 1px solid var(--border-light);
-      border-right: 1px solid var(--border-light);
-      border-bottom: 1px solid var(--border-light);
+      border-top: 1px solid #e5e7eb;
+      border-right: 1px solid #e5e7eb;
+      border-bottom: 1px solid #e5e7eb;
     }
     
     .two-column-section {
@@ -4615,7 +4615,7 @@ export async function generateApplicationPacketHTML(data: ApplicationPacketData)
       font-weight: 600; /* Inter SemiBold */
       margin-bottom: var(--spacing-sm);
       text-transform: uppercase;
-      color: var(--text-primary);
+      color: #1f2937;
       letter-spacing: 0.5px;
       line-height: 1.3;
     }
@@ -4628,8 +4628,8 @@ export async function generateApplicationPacketHTML(data: ApplicationPacketData)
       text-decoration: underline;
       text-decoration-thickness: 2px;
       text-underline-offset: 6px;
-      text-decoration-color: var(--primary-color);
-      color: var(--text-primary);
+      text-decoration-color: #4A9EFF;
+      color: #1f2937;
       letter-spacing: 0.5px;
       line-height: 1.3;
     }
@@ -4639,11 +4639,11 @@ export async function generateApplicationPacketHTML(data: ApplicationPacketData)
       font-weight: 600; /* Inter SemiBold */
       margin: var(--spacing-lg) 0 var(--spacing-md) 0;
       text-transform: uppercase;
-      color: var(--text-primary);
+      color: #1f2937;
       letter-spacing: 0.5px;
       padding: var(--spacing-xs) var(--spacing-sm);
       padding-bottom: var(--spacing-xs);
-      border-bottom: 3px solid var(--primary-color);
+      border-bottom: 3px solid #4A9EFF;
       line-height: 1.3;
       background: linear-gradient(135deg, rgba(74, 158, 255, 0.05) 0%, transparent 100%);
       border-radius: 6px 6px 0 0;
@@ -4657,7 +4657,7 @@ export async function generateApplicationPacketHTML(data: ApplicationPacketData)
       left: 0;
       right: 0;
       height: 3px;
-      background: linear-gradient(90deg, var(--primary-color) 0%, var(--primary-light) 50%, var(--primary-color) 100%);
+      background: linear-gradient(90deg, #4A9EFF 0%, #6bb0ff 50%, #4A9EFF 100%);
     }
     
     .field-row {
@@ -4666,8 +4666,8 @@ export async function generateApplicationPacketHTML(data: ApplicationPacketData)
       margin: var(--spacing-sm) 0;
       padding: var(--spacing-xs) var(--spacing-sm);
       line-height: 1.6;
-      color: var(--text-secondary);
-      border-bottom: 1px dotted var(--border-light);
+      color: #6b7280;
+      border-bottom: 1px dotted #e5e7eb;
       position: relative;
       padding-left: var(--spacing-md);
     }
@@ -4676,13 +4676,13 @@ export async function generateApplicationPacketHTML(data: ApplicationPacketData)
       content: '▸';
       position: absolute;
       left: 0;
-      color: var(--primary-color);
+      color: #4A9EFF;
       font-weight: 700;
       font-size: 10pt;
     }
     
     .field-row strong {
-      color: var(--text-primary);
+      color: #1f2937;
       font-weight: 500; /* Inter Medium for field labels */
       font-size: var(--font-size-sm); /* 13-14px ≈ 10-10.5pt */
       letter-spacing: 0.2px;
@@ -4699,7 +4699,7 @@ export async function generateApplicationPacketHTML(data: ApplicationPacketData)
       font-size: var(--font-size-base); /* 16-18px ≈ 12-13.5pt - Input text */
       font-weight: 400; /* Inter Regular */
       margin: var(--spacing-xs) 0;
-      color: var(--text-primary);
+      color: #1f2937;
       line-height: 1.6;
     }
     
@@ -4707,7 +4707,7 @@ export async function generateApplicationPacketHTML(data: ApplicationPacketData)
       font-size: var(--font-size-xl);
       font-weight: 700;
       margin-top: var(--spacing-sm);
-      color: var(--text-primary);
+      color: #1f2937;
       letter-spacing: 0.3px;
     }
     
@@ -4726,10 +4726,10 @@ export async function generateApplicationPacketHTML(data: ApplicationPacketData)
       gap: var(--spacing-sm);
       margin-top: var(--spacing-sm);
       padding: var(--spacing-md);
-      background: linear-gradient(135deg, var(--bg-light) 0%, var(--bg-white) 100%);
+      background: linear-gradient(135deg, #f9fafb 0%, #ffffff 100%);
       border-radius: 10px;
-      border: 1px solid var(--border-light);
-      box-shadow: var(--shadow-premium);
+      border: 1px solid #e5e7eb;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.03);
       position: relative;
     }
     
@@ -4740,7 +4740,7 @@ export async function generateApplicationPacketHTML(data: ApplicationPacketData)
       left: 0;
       right: 0;
       height: 2px;
-      background: linear-gradient(90deg, var(--primary-color) 0%, transparent 100%);
+      background: linear-gradient(90deg, #4A9EFF 0%, transparent 100%);
       border-radius: 10px 10px 0 0;
     }
     
@@ -4748,8 +4748,8 @@ export async function generateApplicationPacketHTML(data: ApplicationPacketData)
       font-size: var(--font-size-sm);
       padding: var(--spacing-xs) 0;
       line-height: 1.7;
-      color: var(--text-secondary);
-      border-bottom: 1px solid var(--border-light);
+      color: #6b7280;
+      border-bottom: 1px solid #e5e7eb;
     }
     
     .coverage-item:last-child {
@@ -4757,7 +4757,7 @@ export async function generateApplicationPacketHTML(data: ApplicationPacketData)
     }
     
     .coverage-item strong {
-      color: var(--text-primary);
+      color: #1f2937;
       font-weight: 600;
       display: inline-block;
       min-width: 2.5in;
@@ -4785,12 +4785,12 @@ export async function generateApplicationPacketHTML(data: ApplicationPacketData)
       font-size: var(--font-size-sm);
       margin: var(--spacing-sm) 0;
       line-height: 1.8;
-      color: var(--text-secondary);
+      color: #6b7280;
       padding: var(--spacing-xs) var(--spacing-sm);
-      border-bottom: 1px solid var(--border-light);
-      background: linear-gradient(135deg, var(--bg-white) 0%, var(--bg-light) 100%);
+      border-bottom: 1px solid #e5e7eb;
+      background: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%);
       border-radius: 6px;
-      border-left: 2px solid var(--primary-color);
+      border-left: 2px solid #4A9EFF;
       position: relative;
     }
     
@@ -4798,7 +4798,7 @@ export async function generateApplicationPacketHTML(data: ApplicationPacketData)
       content: '●';
       position: absolute;
       left: var(--spacing-xs);
-      color: var(--primary-color);
+      color: #4A9EFF;
       font-size: 8pt;
     }
     
@@ -4807,7 +4807,7 @@ export async function generateApplicationPacketHTML(data: ApplicationPacketData)
     }
     
     .exposure-item strong {
-      color: var(--text-primary);
+      color: #1f2937;
       font-weight: 600;
       display: inline-block;
       min-width: 2.5in;
@@ -4816,13 +4816,13 @@ export async function generateApplicationPacketHTML(data: ApplicationPacketData)
     
     .footnote {
       font-size: var(--font-size-xs);
-      color: var(--text-tertiary);
+      color: #9ca3af;
       margin: var(--spacing-sm) 0;
       font-style: italic;
       line-height: 1.7;
       padding: var(--spacing-sm) var(--spacing-md);
-      background: linear-gradient(135deg, var(--bg-light) 0%, var(--bg-white) 100%);
-      border-left: 3px solid var(--border-medium);
+      background: linear-gradient(135deg, #f9fafb 0%, #ffffff 100%);
+      border-left: 3px solid #d1d5db;
       border-radius: 6px;
       box-shadow: var(--shadow-sm);
       position: relative;
@@ -4833,7 +4833,7 @@ export async function generateApplicationPacketHTML(data: ApplicationPacketData)
       position: absolute;
       left: var(--spacing-xs);
       top: var(--spacing-xs);
-      color: var(--text-tertiary);
+      color: #9ca3af;
       font-size: 10pt;
     }
     
@@ -4845,18 +4845,18 @@ export async function generateApplicationPacketHTML(data: ApplicationPacketData)
       font-size: var(--font-size-sm);
       margin-top: var(--spacing-xs);
       padding: var(--spacing-sm);
-      background: var(--bg-white);
-      border: 2px solid var(--border-medium);
+      background: #ffffff;
+      border: 2px solid #d1d5db;
       border-radius: 8px;
       min-height: 0.7in;
       line-height: 1.8;
-      color: var(--text-primary);
+      color: #1f2937;
       box-shadow: var(--shadow-sm);
       transition: border-color 0.2s;
     }
     
     .description-text:focus {
-      border-color: var(--primary-color);
+      border-color: #4A9EFF;
       outline: none;
       box-shadow: 0 0 0 3px rgba(74, 158, 255, 0.1);
     }
@@ -4871,10 +4871,10 @@ export async function generateApplicationPacketHTML(data: ApplicationPacketData)
       font-size: var(--font-size-sm);
       margin: var(--spacing-sm) 0;
       line-height: 1.8;
-      color: var(--text-secondary);
+      color: #6b7280;
       padding: var(--spacing-xs) var(--spacing-sm);
-      background: var(--bg-white);
-      border-left: 2px solid var(--primary-color);
+      background: #ffffff;
+      border-left: 2px solid #4A9EFF;
       border-radius: 4px;
       position: relative;
     }
@@ -4884,13 +4884,13 @@ export async function generateApplicationPacketHTML(data: ApplicationPacketData)
       content: '▹';
       position: absolute;
       left: var(--spacing-xs);
-      color: var(--primary-color);
+      color: #4A9EFF;
       font-size: 8pt;
     }
     
     .percentage-item strong,
     .detail-item strong {
-      color: var(--text-primary);
+      color: #1f2937;
       font-weight: 600;
       display: inline-block;
       min-width: 2in;
@@ -4927,10 +4927,10 @@ export async function generateApplicationPacketHTML(data: ApplicationPacketData)
       margin: var(--spacing-md) 0;
       padding: var(--spacing-md);
       padding-bottom: var(--spacing-md);
-      border-bottom: 2px solid var(--border-light);
-      background: linear-gradient(135deg, var(--bg-white) 0%, var(--bg-light) 100%);
+      border-bottom: 2px solid #e5e7eb;
+      background: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%);
       border-radius: 8px;
-      border-left: 3px solid var(--primary-color);
+      border-left: 3px solid #4A9EFF;
       box-shadow: var(--shadow-sm);
       position: relative;
     }
@@ -4942,7 +4942,7 @@ export async function generateApplicationPacketHTML(data: ApplicationPacketData)
       top: 0;
       bottom: 0;
       width: 3px;
-      background: linear-gradient(180deg, var(--primary-color) 0%, var(--primary-light) 100%);
+      background: linear-gradient(180deg, #4A9EFF 0%, #6bb0ff 100%);
       border-radius: 8px 0 0 8px;
     }
     
@@ -4954,12 +4954,12 @@ export async function generateApplicationPacketHTML(data: ApplicationPacketData)
       font-size: var(--font-size-sm);
       margin-bottom: var(--spacing-xs);
       line-height: 1.8;
-      color: var(--text-secondary);
+      color: #6b7280;
       text-align: justify;
     }
     
     .question-text strong {
-      color: var(--text-primary);
+      color: #1f2937;
       font-weight: 700;
       letter-spacing: 0.2px;
     }
@@ -4969,11 +4969,11 @@ export async function generateApplicationPacketHTML(data: ApplicationPacketData)
       margin: var(--spacing-xs) 0;
       padding: var(--spacing-xs) var(--spacing-sm);
       font-weight: 600;
-      color: var(--text-primary);
-      background: var(--bg-light);
+      color: #1f2937;
+      background: #f9fafb;
       border-radius: 6px;
       display: inline-block;
-      border: 1px solid var(--border-light);
+      border: 1px solid #e5e7eb;
     }
     
     .yes-no-options span {
@@ -4982,7 +4982,7 @@ export async function generateApplicationPacketHTML(data: ApplicationPacketData)
     }
     
     .yes-no-options span[style*="underline"] {
-      color: var(--primary-color);
+      color: #4A9EFF;
       font-weight: 700;
     }
     
@@ -5020,12 +5020,12 @@ export async function generateApplicationPacketHTML(data: ApplicationPacketData)
       bottom: 0.4in;
       right: 0.6in;
       font-size: var(--font-size-xs);
-      color: var(--text-tertiary);
+      color: #9ca3af;
       font-weight: 600;
       padding: 0.06in 0.18in;
-      background: linear-gradient(135deg, var(--bg-light) 0%, var(--bg-white) 100%);
+      background: linear-gradient(135deg, #f9fafb 0%, #ffffff 100%);
       border-radius: 20px;
-      border: 1px solid var(--border-light);
+      border: 1px solid #e5e7eb;
       box-shadow: var(--shadow-sm);
       letter-spacing: 0.5px;
     }
@@ -5043,40 +5043,40 @@ export async function generateApplicationPacketHTML(data: ApplicationPacketData)
     }
     
     .badge-primary {
-      background: var(--primary-color);
-      color: var(--text-inverse);
-      border: 1px solid var(--primary-dark);
+      background: #4A9EFF;
+      color: #ffffff;
+      border: 1px solid #3a7fd4;
     }
     
     .badge-success {
       background: var(--accent-color);
-      color: var(--text-inverse);
+      color: #ffffff;
       border: 1px solid #059669;
     }
     
     .badge-warning {
       background: var(--warning-color);
-      color: var(--text-inverse);
+      color: #ffffff;
       border: 1px solid #d97706;
     }
     
     .badge-secondary {
-      background: var(--bg-medium);
-      color: var(--text-primary);
-      border: 1px solid var(--border-medium);
+      background: #f3f4f6;
+      color: #1f2937;
+      border: 1px solid #d1d5db;
     }
     
     /* Application ID Badge */
     .application-id-badge {
       display: inline-block;
       padding: 0.08in 0.2in;
-      background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
-      color: var(--text-inverse);
+      background: linear-gradient(135deg, #4A9EFF 0%, #3a7fd4 100%);
+      color: #ffffff;
       border-radius: 25px;
       font-size: var(--font-size-sm);
       font-weight: 700;
       letter-spacing: 1px;
-      box-shadow: var(--shadow-premium), 0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.03), 0 0 0 1px rgba(255, 255, 255, 0.1) inset;
       border: 2px solid rgba(255, 255, 255, 0.3);
       position: relative;
     }
@@ -5097,10 +5097,10 @@ export async function generateApplicationPacketHTML(data: ApplicationPacketData)
       font-size: var(--font-size-base);
       font-weight: 700;
       margin: var(--spacing-sm) 0 var(--spacing-xs) 0;
-      color: var(--text-primary);
+      color: #1f2937;
       padding: var(--spacing-sm) var(--spacing-md);
-      background: linear-gradient(135deg, var(--bg-medium) 0%, var(--bg-light) 100%);
-      border-left: 4px solid var(--primary-color);
+      background: linear-gradient(135deg, #f3f4f6 0%, #f9fafb 100%);
+      border-left: 4px solid #4A9EFF;
       border-radius: 6px;
       box-shadow: var(--shadow-sm);
       text-transform: uppercase;
@@ -5112,8 +5112,8 @@ export async function generateApplicationPacketHTML(data: ApplicationPacketData)
       margin: var(--spacing-sm) 0;
       padding: var(--spacing-sm) var(--spacing-md);
       padding-left: var(--spacing-lg);
-      background: var(--bg-white);
-      border-left: 2px solid var(--border-medium);
+      background: #ffffff;
+      border-left: 2px solid #d1d5db;
       border-radius: 4px;
       position: relative;
     }
@@ -5122,7 +5122,7 @@ export async function generateApplicationPacketHTML(data: ApplicationPacketData)
       content: '→';
       position: absolute;
       left: var(--spacing-sm);
-      color: var(--primary-color);
+      color: #4A9EFF;
       font-weight: 700;
     }
     
@@ -5167,10 +5167,10 @@ export async function generateApplicationPacketHTML(data: ApplicationPacketData)
     .signature-section {
       margin-top: var(--spacing-lg);
       padding: var(--spacing-md);
-      border-top: 3px solid var(--primary-color);
-      background: linear-gradient(135deg, var(--bg-light) 0%, var(--bg-white) 100%);
+      border-top: 3px solid #4A9EFF;
+      background: linear-gradient(135deg, #f9fafb 0%, #ffffff 100%);
       border-radius: 8px;
-      box-shadow: var(--shadow-premium);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.03);
       position: relative;
       overflow: hidden;
     }
@@ -5182,22 +5182,22 @@ export async function generateApplicationPacketHTML(data: ApplicationPacketData)
       left: 0;
       right: 0;
       height: 3px;
-      background: linear-gradient(90deg, var(--primary-color) 0%, var(--primary-light) 50%, var(--primary-color) 100%);
+      background: linear-gradient(90deg, #4A9EFF 0%, #6bb0ff 50%, #4A9EFF 100%);
     }
     
     .signature-field {
       margin: var(--spacing-md) 0;
       padding: var(--spacing-sm);
-      background: var(--bg-white);
+      background: #ffffff;
       border-radius: 6px;
-      border: 1px solid var(--border-light);
+      border: 1px solid #e5e7eb;
     }
     
     .signature-label {
       font-size: var(--font-size-sm);
       font-weight: 600;
       margin-bottom: var(--spacing-xs);
-      color: var(--text-primary);
+      color: #1f2937;
       text-transform: uppercase;
       letter-spacing: 0.5px;
       font-size: 9pt;
@@ -5205,17 +5205,17 @@ export async function generateApplicationPacketHTML(data: ApplicationPacketData)
     
     .signature-line {
       font-size: var(--font-size-sm);
-      border-bottom: 2px dotted var(--text-primary);
+      border-bottom: 2px dotted #1f2937;
       min-width: 3.5in;
       padding-bottom: var(--spacing-xs);
-      color: var(--text-primary);
+      color: #1f2937;
       margin-top: var(--spacing-xs);
-      background: var(--bg-white);
+      background: #ffffff;
     }
     
     .signature-date {
       font-size: var(--font-size-xs);
-      color: var(--text-secondary);
+      color: #6b7280;
       margin-top: var(--spacing-xs);
       font-style: italic;
     }
@@ -5225,8 +5225,8 @@ export async function generateApplicationPacketHTML(data: ApplicationPacketData)
       margin-bottom: var(--spacing-lg);
       padding: var(--spacing-md);
       padding-bottom: var(--spacing-md);
-      border-bottom: 3px solid var(--primary-color);
-      background: linear-gradient(135deg, var(--bg-light) 0%, var(--bg-white) 100%);
+      border-bottom: 3px solid #4A9EFF;
+      background: linear-gradient(135deg, #f9fafb 0%, #ffffff 100%);
       border-radius: 8px;
       box-shadow: var(--shadow-sm);
     }
@@ -5235,7 +5235,7 @@ export async function generateApplicationPacketHTML(data: ApplicationPacketData)
       font-size: var(--font-size-2xl);
       font-weight: 700;
       margin-bottom: var(--spacing-sm);
-      color: var(--text-primary);
+      color: #1f2937;
       letter-spacing: 0.8px;
       text-transform: uppercase;
     }
@@ -5275,11 +5275,11 @@ export async function generateApplicationPacketHTML(data: ApplicationPacketData)
       font-weight: 600; /* Inter SemiBold */
       margin: var(--spacing-md) 0 var(--spacing-md) 0;
       text-transform: uppercase;
-      color: var(--text-primary);
+      color: #1f2937;
       letter-spacing: 0.5px;
       padding: var(--spacing-xs) var(--spacing-sm);
-      border-bottom: 3px solid var(--primary-color);
-      background: var(--bg-light);
+      border-bottom: 3px solid #4A9EFF;
+      background: #f9fafb;
       border-radius: 8px 8px 0 0;
     }
     
@@ -5314,7 +5314,7 @@ export async function generateApplicationPacketHTML(data: ApplicationPacketData)
       background: linear-gradient(135deg, #fef3c7 0%, #fef9e7 100%);
       border-radius: 8px;
       line-height: 1.8;
-      color: var(--text-primary);
+      color: #1f2937;
       box-shadow: var(--shadow-md);
     }
     
@@ -5379,11 +5379,11 @@ export async function generateApplicationPacketHTML(data: ApplicationPacketData)
       font-weight: 700;
       margin-bottom: var(--spacing-sm);
       text-transform: uppercase;
-      color: var(--text-primary);
+      color: #1f2937;
       letter-spacing: 0.8px;
       padding: var(--spacing-sm) var(--spacing-md);
-      border-bottom: 3px solid var(--primary-color);
-      background: linear-gradient(135deg, var(--bg-light) 0%, var(--bg-medium) 100%);
+      border-bottom: 3px solid #4A9EFF;
+      background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
       border-radius: 8px 8px 0 0;
       box-shadow: var(--shadow-sm);
       position: relative;
@@ -5396,38 +5396,38 @@ export async function generateApplicationPacketHTML(data: ApplicationPacketData)
       left: 0;
       right: 0;
       height: 3px;
-      background: linear-gradient(90deg, var(--primary-color) 0%, var(--primary-light) 50%, var(--primary-color) 100%);
+      background: linear-gradient(90deg, #4A9EFF 0%, #6bb0ff 50%, #4A9EFF 100%);
     }
     
     .invoice-row {
       display: flex;
       justify-content: space-between;
       padding: var(--spacing-xs) var(--spacing-sm);
-      border-bottom: 1px solid var(--border-light);
+      border-bottom: 1px solid #e5e7eb;
       font-size: var(--font-size-sm);
       line-height: 1.7;
-      color: var(--text-secondary);
+      color: #6b7280;
       transition: background-color 0.2s;
     }
     
     .invoice-row:nth-child(even) {
-      background: var(--bg-light);
+      background: #f9fafb;
     }
     
     .invoice-row:hover {
-      background: var(--bg-medium);
+      background: #f3f4f6;
     }
     
     .invoice-row-total {
       display: flex;
       justify-content: space-between;
       padding: var(--spacing-sm) var(--spacing-md);
-      border-top: 3px solid var(--primary-color);
+      border-top: 3px solid #4A9EFF;
       margin-top: var(--spacing-xs);
       font-size: var(--font-size-base);
       font-weight: 700;
-      color: var(--text-primary);
-      background: linear-gradient(135deg, var(--bg-light) 0%, var(--bg-medium) 100%);
+      color: #1f2937;
+      background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
       border-radius: 0 0 8px 8px;
       box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
       position: relative;
@@ -5440,7 +5440,7 @@ export async function generateApplicationPacketHTML(data: ApplicationPacketData)
       left: 0;
       right: 0;
       height: 3px;
-      background: linear-gradient(90deg, var(--primary-color) 0%, var(--primary-light) 50%, var(--primary-color) 100%);
+      background: linear-gradient(90deg, #4A9EFF 0%, #6bb0ff 50%, #4A9EFF 100%);
     }
     
     .invoice-label {
@@ -5452,7 +5452,7 @@ export async function generateApplicationPacketHTML(data: ApplicationPacketData)
       text-align: right;
       min-width: 1.3in;
       font-weight: 600;
-      color: var(--text-primary);
+      color: #1f2937;
     }
     
     .invoice-row-total .invoice-label {
@@ -5464,7 +5464,7 @@ export async function generateApplicationPacketHTML(data: ApplicationPacketData)
     .invoice-row-total .invoice-value {
       font-weight: 700;
       font-size: var(--font-size-lg);
-      color: var(--primary-color);
+      color: #4A9EFF;
     }
     
     .payment-option {
@@ -5474,12 +5474,12 @@ export async function generateApplicationPacketHTML(data: ApplicationPacketData)
       background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
       border-left: 4px solid var(--accent-color);
       border-radius: 8px;
-      color: var(--text-primary);
+      color: #1f2937;
       font-weight: 600;
       box-shadow: var(--shadow-sm);
-      border-top: 1px solid var(--border-light);
-      border-right: 1px solid var(--border-light);
-      border-bottom: 1px solid var(--border-light);
+      border-top: 1px solid #e5e7eb;
+      border-right: 1px solid #e5e7eb;
+      border-bottom: 1px solid #e5e7eb;
     }
     
     .payment-option strong {

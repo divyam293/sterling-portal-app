@@ -144,11 +144,17 @@ async function seedAll() {
 
     // 4. Seed Carriers
     const carrier1 = await Carrier.findOneAndUpdate(
-      { name: "Pacific Insurance Co" },
+      { name: "Richmond National Insurance" },
       {
-        name: "Pacific Insurance Co",
-        email: "underwriting@pacificinsurance.com",
-        statesServed: ["CA", "NV", "OR", "WA"],
+        name: "Richmond National Insurance",
+        email: "underwriting@richmondnational.com",
+        address: {
+          street: "11013 West Broad Street, Suite 300",
+          city: "Glen Allen",
+          state: "VA",
+          zip: "23060",
+        },
+        statesServed: ["CA", "NV", "OR", "WA", "TX", "FL", "NY", "VA"],
         industries: ["Hospitality", "Construction"],
         wholesaleFeePercent: 15,
       },
@@ -157,11 +163,17 @@ async function seedAll() {
     console.log("✅ Carrier 1 seeded:", carrier1.name);
 
     const carrier2 = await Carrier.findOneAndUpdate(
-      { name: "Golden State Underwriters" },
+      { name: "Kinsale Insurance Company" },
       {
-        name: "Golden State Underwriters",
-        email: "quotes@goldenstate.com",
-        statesServed: ["CA"],
+        name: "Kinsale Insurance Company",
+        email: "quotes@kinsale.com",
+        address: {
+          street: "2025 Staples Mill Rd",
+          city: "Richmond",
+          state: "VA",
+          zip: "23230",
+        },
+        statesServed: ["CA", "VA", "TX", "FL", "NY"],
         industries: ["Transportation", "Construction"],
         wholesaleFeePercent: 12,
       },

@@ -1,99 +1,71 @@
 /**
- * Currency Formatting Utilities
- * 
- * Formats numbers as currency with dollar signs and commas
- * Example: 1000000 -> $1,000,000
+ * Currency formatting helpers used across forms and quoting pages.
+ *
+ * IMPORTANT:
+ * - `formatCurrency` intentionally returns a number string WITHOUT "$"
+ *   because many inputs render the "$" as a separate prefix element.
  */
 
 /**
- * Format a number as currency with $ and commas
- * @param amount - The number to format
- * @param decimals - Number of decimal places (default: 0)
- * @returns Formatted string like "$1,000,000" or "$1,000,000.00"
+ * Parse a currency-like input into a number.
+ * Accepts values like "1,234.56", "$1,234.56", "1234", "".
  */
-export function formatCurrency(amount: number | string | null | undefined, decimals: number = 0): string {
-  if (amount === null || amount === undefined || amount === '') {
-    return '$0';
-  }
+export function parseCurrency(input: string | number | null | undefined): number {
+  if (input === null || input === undefined) return 0;
+  if (typeof input === "number") return Number.isFinite(input) ? input : 0;
 
-  const numAmount = typeof amount === 'string' ? parseFloat(amount.replace(/[^0-9.-]/g, '')) : amount;
-  
-  if (isNaN(numAmount)) {
-    return '$0';
-  }
+  const raw = String(input).trim();
+  if (!raw) return 0;
 
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
+  // Keep digits, minus, and dot. Remove commas, spaces, currency symbols, etc.
+  const normalized = raw.replace(/[^\d.-]/g, "");
+  const parsed = Number.parseFloat(normalized);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+/**
+ * Format a number as a currency-like string WITHOUT the "$" symbol.
+ * Example: 1234.5 -> "1,234.50"
+ */
+export function formatCurrency(amount: number, decimals: number = 2): string {
+  const safe = Number.isFinite(amount) ? amount : 0;
+  return safe.toLocaleString("en-US", {
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,
-  }).format(numAmount);
+  });
 }
 
 /**
- * Format a number as currency for input fields (removes $ for editing)
- * @param amount - The number to format
- * @returns Formatted string like "1,000,000"
+ * Format user input while typing (adds thousands separators, preserves partial decimals).
+ * Example: "1234" -> "1,234"
+ * Example: "1234.5" -> "1,234.5"
+ * Example: "$1,234.56" -> "1,234.56"
  */
-export function formatCurrencyForInput(amount: number | string | null | undefined): string {
-  if (amount === null || amount === undefined || amount === '') {
-    return '';
+export function formatCurrencyInput(value: string | number | null | undefined): string {
+  if (value === null || value === undefined) return "";
+  const str = String(value);
+  if (!str.trim()) return "";
+
+  // Remove everything except digits and dot (we don't expect negatives in these inputs).
+  const cleaned = str.replace(/[^\d.]/g, "");
+  if (!cleaned) return "";
+
+  const parts = cleaned.split(".");
+  const integerRaw = parts[0] ?? "";
+  const decimalRaw = parts.length > 1 ? parts.slice(1).join("") : "";
+
+  // Strip leading zeros unless the value is exactly "0" or starts with "0."
+  const integerDigits = integerRaw.replace(/^0+(?=\d)/, "");
+
+  // Add commas to integer part.
+  const integerWithCommas = integerDigits.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+
+  // Preserve up to 2 decimal digits while typing.
+  if (parts.length > 1) {
+    const dec = decimalRaw.slice(0, 2);
+    return `${integerWithCommas || "0"}.${dec}`;
   }
 
-  const numAmount = typeof amount === 'string' ? parseFloat(amount.replace(/[^0-9.-]/g, '')) : amount;
-  
-  if (isNaN(numAmount)) {
-    return '';
-  }
-
-  return new Intl.NumberFormat('en-US', {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 2,
-  }).format(numAmount);
-}
-
-/**
- * Parse a formatted currency string back to a number
- * @param formattedAmount - Formatted string like "$1,000,000" or "1,000,000"
- * @returns The numeric value
- */
-export function parseCurrency(formattedAmount: string): number {
-  if (!formattedAmount) {
-    return 0;
-  }
-
-  // Remove all non-numeric characters except decimal point and minus sign
-  const cleaned = formattedAmount.replace(/[^0-9.-]/g, '');
-  const parsed = parseFloat(cleaned);
-  
-  return isNaN(parsed) ? 0 : parsed;
-}
-
-/**
- * Format currency for display in input fields with live formatting
- * Handles user typing and formats as they type
- * @param value - The input value
- * @returns Formatted string for display
- */
-export function formatCurrencyInput(value: string): string {
-  if (!value) return '';
-  
-  // Remove all non-numeric characters except decimal point
-  const cleaned = value.replace(/[^0-9.]/g, '');
-  
-  if (!cleaned) return '';
-  
-  // Split by decimal point
-  const parts = cleaned.split('.');
-  const integerPart = parts[0] || '';
-  const decimalPart = parts[1] || '';
-  
-  // Format integer part with commas
-  const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-  
-  // Combine with decimal part (limit to 2 decimal places)
-  const formattedDecimal = decimalPart.length > 2 ? decimalPart.substring(0, 2) : decimalPart;
-  
-  return formattedDecimal ? `${formattedInteger}.${formattedDecimal}` : formattedInteger;
+  return integerWithCommas;
 }
 

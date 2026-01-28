@@ -980,4 +980,3 @@ export async function sendBindRequestToCarrier(data: BindRequestEmailData): Prom
 
   return await sendEmail(emailOptions);
 }
-

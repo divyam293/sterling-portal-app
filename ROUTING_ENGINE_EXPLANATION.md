@@ -77,12 +77,12 @@ const fallbackRules = await RoutingRule.find({
 
 | Industry | Subtype | State | Carrier | Priority |
 |----------|---------|-------|---------|----------|
-| Construction | Contractor | CA | Pacific Insurance Co | 10 (HIGH) |
-| Construction | Contractor | null | Golden State Underwriters | 20 (LOW) |
+| Construction | Contractor | CA | Richmond National Insurance | 10 (HIGH) |
+| Construction | Contractor | null | Kinsale Insurance Company | 20 (LOW) |
 
 **Result:** For a CA Contractor submission, it finds:
-1. ✅ Exact match: Pacific Insurance Co (priority 10)
-2. ✅ Fallback: Golden State Underwriters (priority 20)
+1. ✅ Exact match: Richmond National Insurance (priority 10)
+2. ✅ Fallback: Kinsale Insurance Company (priority 20)
 
 ---
 
@@ -103,8 +103,8 @@ if (carrier.statesServed && !carrier.statesServed.includes("CA")) {
 ```
 
 **Example:**
-- Pacific Insurance Co serves: `["CA", "NV", "AZ"]` ✅ Serves CA
-- Golden State Underwriters serves: `["CA", "OR", "WA"]` ✅ Serves CA
+- Richmond National Insurance serves: `["CA", "NV", "OR", "WA", "TX", "FL", "NY", "VA"]` ✅ Serves CA
+- Kinsale Insurance Company serves: `["CA", "VA", "TX", "FL", "NY"]` ✅ Serves CA
 
 Both carriers serve CA, so both will receive the submission.
 
@@ -135,9 +135,9 @@ console.log(`Submission link: http://localhost:3000/admin/submissions/${submissi
 [RoutingEngine] 📧 Sending email to pacific@insurance.com for submission 507f1f77bcf86cd799439011
 [RoutingEngine] Email content: New submission received - Construction / Contractor in CA
 [RoutingEngine] Submission link: http://localhost:3000/admin/submissions/507f1f77bcf86cd799439011
-[RoutingEngine] ✅ Successfully routed submission 507f1f77bcf86cd799439011 to carrier Pacific Insurance Co
-[RoutingEngine] 📧 Sending email to golden@insurance.com for submission 507f1f77bcf86cd799439011
-[RoutingEngine] ✅ Successfully routed submission 507f1f77bcf86cd799439011 to carrier Golden State Underwriters
+[RoutingEngine] ✅ Successfully routed submission 507f1f77bcf86cd799439011 to carrier Richmond National Insurance
+[RoutingEngine] 📧 Sending email to quotes@kinsale.com for submission 507f1f77bcf86cd799439011
+[RoutingEngine] ✅ Successfully routed submission 507f1f77bcf86cd799439011 to carrier Kinsale Insurance Company
 ```
 
 ---
@@ -176,7 +176,7 @@ RoutingLog Collection:
 [
   {
     submissionId: "507f1f77bcf86cd799439011",
-    carrierId: "Pacific Insurance Co ID",
+    carrierId: "Richmond National Insurance ID",
     status: "SENT",
     emailSent: true,
     emailSentAt: "2024-01-15T10:30:00Z",
@@ -184,7 +184,7 @@ RoutingLog Collection:
   },
   {
     submissionId: "507f1f77bcf86cd799439011",
-    carrierId: "Golden State Underwriters ID",
+    carrierId: "Kinsale Insurance Company ID",
     status: "SENT",
     emailSent: true,
     emailSentAt: "2024-01-15T10:30:01Z",
@@ -241,12 +241,12 @@ SUBMITTED → (RoutingEngine runs) → ROUTED ✅
 3. **RoutingEngine.routeSubmission() called automatically**
 
 4. **Engine finds rules:**
-   - ✅ Exact match: Pacific Insurance Co (CA-specific, priority 10)
-   - ✅ Fallback: Golden State Underwriters (all states, priority 20)
+   - ✅ Exact match: Richmond National Insurance (CA-specific, priority 10)
+   - ✅ Fallback: Kinsale Insurance Company (all states, priority 20)
 
 5. **Engine checks carriers:**
-   - ✅ Pacific Insurance Co serves CA
-   - ✅ Golden State Underwriters serves CA
+   - ✅ Richmond National Insurance serves CA
+   - ✅ Kinsale Insurance Company serves CA
 
 6. **Engine "sends" emails:**
    - 📧 Email to pacific@insurance.com
@@ -254,8 +254,8 @@ SUBMITTED → (RoutingEngine runs) → ROUTED ✅
    - (Logged to console)
 
 7. **Engine creates logs:**
-   - RoutingLog #1: Pacific Insurance Co, status "SENT"
-   - RoutingLog #2: Golden State Underwriters, status "SENT"
+   - RoutingLog #1: Richmond National Insurance, status "SENT"
+   - RoutingLog #2: Kinsale Insurance Company, status "SENT"
 
 8. **Engine updates submission:**
    - Status changed: `"SUBMITTED"` → `"ROUTED"` ✅
@@ -270,8 +270,8 @@ npm run seed:routing
 ```
 
 This creates rules like:
-- Construction/Contractor/CA → Pacific Insurance Co
-- Construction/Contractor/all states → Golden State Underwriters
+- Construction/Contractor/CA → Richmond National Insurance
+- Construction/Contractor/all states → Kinsale Insurance Company
 
 ### 2. **Create a New Submission:**
 - Go to `/agency/submit`

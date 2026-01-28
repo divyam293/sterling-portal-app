@@ -1,8 +1,16 @@
 import mongoose, { Schema, Document, Model } from "mongoose";
 
+export interface ICarrierAddress {
+  street: string;
+  city: string;
+  state: string;
+  zip: string;
+}
+
 export interface ICarrier extends Document {
   name: string;
   email: string;
+  address?: ICarrierAddress;
   statesServed: string[];
   industries: string[];
   wholesaleFeePercent: number;
@@ -23,6 +31,12 @@ const CarrierSchema: Schema = new Schema(
       required: true,
       lowercase: true,
       trim: true,
+    },
+    address: {
+      street: { type: String, trim: true },
+      city: { type: String, trim: true },
+      state: { type: String, trim: true },
+      zip: { type: String, trim: true },
     },
     statesServed: {
       type: [String],

@@ -84,7 +84,10 @@ export async function generatePDFFromHTML(options: PDFGenerationOptions): Promis
   // Option 1: PDFShift (Primary - Cost-effective)
   // Get API key from: https://pdfshift.io/
   const PDFSHIFT_API_KEY = process.env.PDFSHIFT_API_KEY;
-  if (PDFSHIFT_API_KEY) {
+  // IMPORTANT: Disable PDFShift entirely in production (e.g. on Vercel) to avoid 2MB limit
+  // Production should use CustomJS / Browserless instead.
+  const isProductionEnv = !!(process.env.VERCEL || process.env.NODE_ENV === 'production');
+  if (PDFSHIFT_API_KEY && !isProductionEnv) {
     // Declare minifiedHTML outside try block so it's accessible in catch
     let minifiedHTML: string = html;
     
@@ -189,7 +192,7 @@ export async function generatePDFFromHTML(options: PDFGenerationOptions): Promis
                             error.message.includes('403');
       
       const isDevelopment = !process.env.VERCEL && process.env.NODE_ENV === 'development';
-      const isProduction = process.env.VERCEL || process.env.NODE_ENV === 'production';
+      const isProduction = isProductionEnv;
       
       // In development, for credits/size errors, try CustomJS first if available
       if ((isSizeError || isCreditsError) && isDevelopment) {

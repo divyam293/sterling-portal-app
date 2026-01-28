@@ -1827,6 +1827,12 @@ export async function generateApplicationPacketHTML(data: ApplicationPacketData)
       box-sizing: border-box;
     }
     
+    /* Ensure all text elements have explicit colors for CustomJS compatibility */
+    /* Base fallback - will be overridden by more specific selectors */
+    body, p, div, span, h1, h2, h3, h4, h5, h6, label, td, th, li {
+      color: #1f2937;
+    }
+    
     /* Inter Font Face - Modern Fintech Style */
     @font-face {
       font-family: 'Inter';
@@ -1857,10 +1863,15 @@ export async function generateApplicationPacketHTML(data: ApplicationPacketData)
       font-size: var(--font-size-base);
       font-weight: 400; /* Inter Regular */
       line-height: 1.6;
-      color: var(--text-primary);
-      background: var(--bg-white);
+      color: #1f2937 !important; /* Explicit black/dark gray for CustomJS compatibility */
+      background: #ffffff !important;
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
+    }
+    
+    /* Ensure base text elements inherit explicit color for CustomJS */
+    p, div, span, h1, h2, h3, h4, h5, h6, label, td, th, li {
+      color: #1f2937;
     }
     
     .page {
